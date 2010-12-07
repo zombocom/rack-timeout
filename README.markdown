@@ -10,7 +10,7 @@ Usage
 ### Rails 3 app or Rails 2.3 app with Bundler
 
     # Gemfile
-    gem "SystemTimer", :require => "system_timer" if RUBY_VERSION < "1.9"
+    gem "SystemTimer", :require => "system_timer", :platforms => :ruby_18
     gem "rack-timeout"
 
 
