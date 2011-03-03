@@ -35,6 +35,12 @@ Usage
     Rack::Timeout.timeout = 10  # seconds
 
 
+### Here be dragons
+
+SystemTimer/timeout rely on threads. If your app or any of the libraries it depends on is
+not thread-safe, you may run into issues using rack-timeout.
+
+
 ---
 Copyright © 2010 Caio Chassot, released under the MIT license
 <http://github.com/kch/rack-timeout>
