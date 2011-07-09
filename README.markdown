@@ -1,7 +1,11 @@
 Rack::Timeout
 =============
 
-Abort requests that are taking too long.
+Abort requests with Timeout::Error when they are taking too long.
+
+This fork differs from kch's in that it adds Timeout::Error as the default error class when calling timeout.
+Passing in the error class allows Rails to use rescue_from Timeout::Error in Rails controllers instead of
+rescue_from Exception.
 
 
 Usage
