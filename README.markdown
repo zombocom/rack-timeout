@@ -1,7 +1,7 @@
 Rack::Timeout
 =============
 
-Abort requests that are taking too long.
+Abort requests that are taking too long; a Timeout::Error will be raised.
 
 
 Usage
