@@ -26,7 +26,7 @@ Usage
     # config.ru
     require 'rack/timeout'
     use Rack::Timeout
-    Rack::Timeout.timeout = 10  # this line is optional. if omitted, default is 30 seconds.
+    Rack::Timeout.timeout = 10  # this line is optional. if omitted, default is 15 seconds.
 
 
 ### Setting a custom timeout for Rails apps
