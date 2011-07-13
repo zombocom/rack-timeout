@@ -29,7 +29,7 @@ Usage
     Rack::Timeout.timeout = 10  # this line is optional. if omitted, default is 30 seconds.
 
 
-### Setting a custom timeout for Rails apps:
+### Setting a custom timeout for Rails apps
 
     # config/initializers/timeout.rb
     Rack::Timeout.timeout = 10  # seconds
