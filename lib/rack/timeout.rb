@@ -3,7 +3,7 @@ SystemTimer ||= Timeout
 
 module Rack
   class Timeout
-    @timeout = 30
+    @timeout = 15
     class << self
       attr_accessor :timeout
     end
