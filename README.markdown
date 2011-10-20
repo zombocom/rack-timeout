@@ -17,7 +17,7 @@ Usage
 ### Rails 2.3 app without Bundler
 
     # config/environment.rb
-    config.gem "SystemTimer", :require => "system_timer" if RUBY_VERSION < "1.9"
+    config.gem "SystemTimer", :lib => "system_timer" if RUBY_VERSION < "1.9"
     config.gem "rack-timeout"
 
 
