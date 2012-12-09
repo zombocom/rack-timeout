@@ -7,7 +7,12 @@ Abort requests that are taking too long; a Timeout::Error will be raised.
 Usage
 -----
 
-### Rails 3 app or Rails 2.3 app with Bundler
+### Rails 3 app or Rails 2.3 app with Ruby 1.9 and Bundler
+
+    # Gemfile
+    gem "rack-timeout"
+
+### Rails 3 app or Rails 2.3 app with Ruby 1.8 and Bundler
 
     # Gemfile
     gem "SystemTimer", :require => "system_timer", :platforms => :ruby_18
