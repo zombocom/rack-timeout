@@ -4,8 +4,9 @@ SystemTimer ||= Timeout
 module Rack
   class Timeout
     @timeout = 15
+    @excludes = []
     class << self
-      attr_accessor :timeout
+      attr_accessor :timeout, :excludes
     end
 
     def initialize(app)
@@ -13,7 +14,11 @@ module Rack
     end
 
     def call(env)
-      SystemTimer.timeout(self.class.timeout, ::Timeout::Error) { @app.call(env) }
+      if self.class.excludes.any? {|exclude_uri| /#{exclude_uri}/ =~ env['REQUEST_URI']}
+        @app.call(env)
+      else
+        SystemTimer.timeout(self.class.timeout, ::Timeout::Error) { @app.call(env) }
+      end
     end
 
   end
