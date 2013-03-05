@@ -47,5 +47,5 @@ not thread-safe, you may run into issues using rack-timeout.
 
 
 ---
-Copyright © 2010 Caio Chassot, released under the MIT license
+Copyright © 2010 Caio Chassot, released under the MIT license  
 <http://github.com/kch/rack-timeout>
