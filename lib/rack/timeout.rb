@@ -1,5 +1,5 @@
 require RUBY_VERSION < '1.9' && RUBY_PLATFORM != 'java' ? 'system_timer' : 'timeout'
-SystemTimer ||= Timeout
+Timeout ||= SystemTimer
 
 module Rack
   class Timeout
@@ -13,7 +13,7 @@ module Rack
     end
 
     def call(env)
-      SystemTimer.timeout(self.class.timeout, ::Timeout::Error) { @app.call(env) }
+      ::Timeout.timeout(self.class.timeout, ::Timeout::Error) { @app.call(env) }
     end
 
   end
