@@ -29,7 +29,7 @@ Usage
 ### Sinatra and other Rack apps
 
     # config.ru
-    require 'rack/timeout'
+    require "rack/timeout"
     use Rack::Timeout
     Rack::Timeout.timeout = 10  # this line is optional. if omitted, default is 15 seconds.
 
