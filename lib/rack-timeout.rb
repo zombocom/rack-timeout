@@ -5,7 +5,7 @@ if defined? Rails
   when 2; Rails.configuration.middleware.use Rack::Timeout
   when 3
     class Rack::Timeout::Railtie < Rails::Railtie
-      initializer("rack-timeout.insert-rack-timeout") { |app| app.config.middleware.use Rack::Timeout }
+      initializer("rack-timeout.insert-rack-timeout") { |app| app.config.middleware.insert 0, Rack::Timeout }
     end
   end
 end
