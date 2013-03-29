@@ -42,8 +42,7 @@ Usage
 
 ### Here be dragons
 
-SystemTimer/timeout rely on threads. If your app or any of the libraries it depends on is
-not thread-safe, you may run into issues using rack-timeout.
+SystemTimer/timeout rely on threads. If your app or any of the libraries it depends on is not thread-safe, you may run into issues using rack-timeout. This is not referring to concurrent web servers such as [Unicorn](http://unicorn.bogomips.org/) and [Puma](http://puma.io/). These should work just fine with Rack::Timeout.
 
 
 ---
