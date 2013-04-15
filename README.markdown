@@ -30,9 +30,8 @@ Usage
 
     # config.ru
     require "rack/timeout"
-    use Rack::Timeout
+    use Rack::Timeout           # call as early as possible so rack-timeout runs before other middlewares.
     Rack::Timeout.timeout = 10  # this line is optional. if omitted, default is 15 seconds.
-
 
 ### Setting a custom timeout for Rails apps
 
@@ -47,5 +46,5 @@ not thread-safe, you may run into issues using rack-timeout.
 
 
 ---
-Copyright © 2010 Caio Chassot, released under the MIT license
+Copyright © 2010 Caio Chassot, released under the MIT license  
 <http://github.com/kch/rack-timeout>
