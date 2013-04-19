@@ -49,6 +49,15 @@ Concurrent web servers such as [Unicorn][] and [Puma][] should work fine with ra
 [Unicorn]: http://unicorn.bogomips.org/
 [Puma]: http://puma.io/
 
+#### A note about testing timeouts in Rails apps
+
+If you're trying to test that a `Timeout::Error` is being raised in your Rails application, please note that
+it's **not possible in functional tests**. You *can*, however, test `assert_raises Rack::Timeout::Error`
+in integration tests.
+
+There are more details about general rack middleware testing with Rails in this [@pablobm's answer on Stack Overflow][pablobm].
+
+[pablobm]: http://stackoverflow.com/a/8681208/13989
 
 ---
 Copyright © 2010 Caio Chassot, released under the MIT license  
