@@ -46,10 +46,19 @@ you may run into issues using rack-timeout.
 
 Concurrent web servers such as [Unicorn][] and [Puma][] should work fine with rack-timeout.
 
+If you're trying to test that a `TimeoutError` is being raised in your rails application, please note that it's **not possible in functional tests**. You *can* `assert_raises TimeoutError` in integration tests by adding the following to your `test_helper.rb`
+
+    # test/test_helper.rb
+    ActionDispatch::IntegrationTest.app = Rack::Builder.new do
+      eval File.read(Rails.root.join('config.ru'))
+    end
+
+Please see [@pablobm's Stack Overflow comment for more information](http://stackoverflow.com/questions/5016690/making-rails-tests-aware-of-rack-middleware-outside-railss-internal-chain/8681208#8681208).
+
 [Unicorn]: http://unicorn.bogomips.org/
 [Puma]: http://puma.io/
 
 
 ---
-Copyright © 2010 Caio Chassot, released under the MIT license  
+Copyright © 2010 Caio Chassot, released under the MIT license
 <http://github.com/kch/rack-timeout>
