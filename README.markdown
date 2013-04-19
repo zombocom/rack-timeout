@@ -46,7 +46,7 @@ you may run into issues using rack-timeout.
 
 Concurrent web servers such as [Unicorn][] and [Puma][] should work fine with rack-timeout.
 
-If you're trying to test that a `TimeoutError` is being raised in your rails application, please note that it's **not possible in functional tests**. You *can* `assert_raises TimeoutError` in integration tests by adding the following to your `test_helper.rb`
+If you're trying to test that a `TimeoutError` is being raised in your Rails application, please note that it's **not possible in functional tests**. You *can* `assert_raises TimeoutError` in integration tests by adding the following to your `test_helper.rb`
 
     # test/test_helper.rb
     ActionDispatch::IntegrationTest.app = Rack::Builder.new do
