@@ -60,5 +60,5 @@ Please see [@pablobm's Stack Overflow comment for more information](http://stack
 
 
 ---
-Copyright © 2010 Caio Chassot, released under the MIT license
+Copyright © 2010 Caio Chassot, released under the MIT license  
 <http://github.com/kch/rack-timeout>
