@@ -52,15 +52,10 @@ Concurrent web servers such as [Unicorn][] and [Puma][] should work fine with ra
 #### A note about testing timeouts in Rails apps
 
 If you're trying to test that a `Timeout::Error` is being raised in your Rails application, please note that
-it's **not possible in functional tests**. You *can* `assert_raises Timeout::Error` in integration tests by
-adding the following to your `test_helper.rb`:
+it's **not possible in functional tests**. You *can*, however, test `assert_raises Rack::Timeout::Error`
+in integration tests.
 
-    # test/test_helper.rb
-    ActionDispatch::IntegrationTest.app = Rack::Builder.new do
-      eval File.read(Rails.root.join('config.ru'))
-    end
-
-Please see [@pablobm's answer on Stack Overflow][pablobm] for more information.
+There are more details about general rack middleware testing with Rails in this [@pablobm's answer on Stack Overflow][pablobm].
 
 [pablobm]: http://stackoverflow.com/a/8681208/13989
 
