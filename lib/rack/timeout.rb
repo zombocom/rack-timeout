@@ -16,28 +16,25 @@ module Rack
     end
 
     def f n
-      '%05.2f' % n
+      '%.2f' % n
     end
 
     def call(env)
-      request_id      = env['HTTP_HEROKU_REQUEST_ID'].to_s[0, 6]
+      request_id      = env['HTTP_HEROKU_REQUEST_ID']
       request_start   = env["HTTP_X_REQUEST_START"] # Unix timestamp in ms
       request_start &&= Time.at request_start.to_i / 1000.0
       request_age     = Time.now - request_start
       time_left       = 30 - request_age
-      if time_left < 0
-        $stderr.puts "rack-timeout: id=#{request_id} age=#{f request_age} aborted, too old"
-        raise RequestDroppedByRouterError
-      end
-      timeout = [self.class.timeout, time_left].min
-      $stderr.puts "rack-timeout: id=#{request_id} age=#{f request_age} timeout=#{f timeout}"
+      log             = lambda { |s| $stderr.puts "rack-timeout: id=#{request_id} age=#{f request_age} #{s}"}
+      timeout         = [self.class.timeout, time_left].min
+      (log.call "dropped"; raise RequestDroppedByRouterError) if time_left < 0
+      log.call "timeout=#{f timeout} starting"
       ::Timeout.timeout(timeout, ::Rack::Timeout::Error) do
         t0 = Time.now
-        retval = @app.call(env)
-        t1 = Time.now
-        td = t1 - t0
-        $stderr.puts "rack-timeout: id=#{request_id} age=#{f request_age} timeout=#{f timeout} completed=#{f td}"
-        retval
+        rv = @app.call(env)
+        td = Time.now - t0
+        log.call "timeout=#{f timeout} completed=#{f td}"
+        rv
       end
     end
 
