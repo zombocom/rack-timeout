@@ -23,7 +23,7 @@ module Rack
       request_id      = env['HTTP_HEROKU_REQUEST_ID']
       request_start   = env["HTTP_X_REQUEST_START"] # Unix timestamp in ms
       request_start &&= Time.at request_start.to_i / 1000.0
-      request_age     = Time.now - request_start
+      request_age     = request_start ? Time.now - request_start : 0
       time_left       = 30 - request_age
       log             = lambda { |s| $stderr.puts "rack-timeout: id=#{request_id} age=#{f request_age} #{s}"}
       timeout         = [self.class.timeout, time_left].min
