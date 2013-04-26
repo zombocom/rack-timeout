@@ -1,11 +1,17 @@
 # encoding: utf-8
 require 'timeout'
+require 'securerandom'
 
 module Rack
   class Timeout
     class Error < RuntimeError;        end
     class RequestTooOldError  < Error; end
     class RequestAbortedError < Error; end
+
+    RequestData     = Struct.new(:id, :age, :timeout, :duration, :state)
+    ENV_INFO_KEY    = 'rack-timeout.info'
+    FINAL_STATES    = [:dropped, :aborted, :completed]
+    MAX_REQUEST_AGE = 30 # seconds
 
     @timeout = 15
     class << self
@@ -16,47 +22,42 @@ module Rack
       @app = app
     end
 
-    MAX_REQUEST_AGE = 30 # seconds
     def call(env)
+      info          = env[ENV_INFO_KEY] ||= RequestData.new
+      info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || SecureRandom.hex
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
       request_start = Time.at(request_start.to_i / 1000) if request_start
-      request_age   = Time.now - request_start           if request_start
-      time_left     = MAX_REQUEST_AGE - request_age      if request_age
-      timeout       = [self.class.timeout, time_left].compact.min
+      info.age      = Time.now - request_start           if request_start
+      time_left     = MAX_REQUEST_AGE - info.age         if info.age
+      info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
 
-      env['rack-timeout.request-age'] = request_age
-      env['rack-timeout.timeout']     = timeout if timeout > 0
-
-      if timeout <= 0
-        Rack::Timeout.set_state_and_log! env, :dropped
+      if time_left && time_left <= 0
+        Rack::Timeout.set_state_and_log! info, :dropped
         raise RequestTooOldError
       end
 
-      Rack::Timeout.set_state_and_log! env, :ready
-      ::Timeout.timeout(timeout, RequestAbortedError) do
-        ready_time = Time.now
-        response = @app.call(env)
-        env['rack-timeout.duration'] = Time.now - ready_time
-        Rack::Timeout.set_state_and_log! env, :completed
+      Rack::Timeout.set_state_and_log! info, :ready
+      ::Timeout.timeout(info.timeout, RequestAbortedError) do
+        ready_time    = Time.now
+        response      = @app.call(env)
+        info.duration = Time.now - ready_time
+        Rack::Timeout.set_state_and_log! info, :completed
         response
       end
     end
 
-    FINAL_STATES = [:dropped, :aborted, :completed]
-    def self.set_state_and_log!(env, state)
-      env["rack-timeout.state"] = state unless FINAL_STATES.include? env["rack-timeout.state"]
-
-      id, state              = env.values_at(*%w[ HTTP_HEROKU_REQUEST_ID rack-timeout.state ])
-      age, timeout, duration = env.values_at(*%w[ rack-timeout.request-age rack-timeout.timeout rack-timeout.duration ])
-                                .map { |s| "%.fms" % (s * 1000) if s }
-
-      s = "rack-timeout:"
-      s << " id="       << id         if id
-      s << " age="      << age        if age
-      s << " timeout="  << timeout    if timeout
-      s << " duration=" << duration   if duration
-      s << " state="    << state.to_s if state
+    def self.set_state_and_log!(info, state)
+      return if FINAL_STATES.include? info.state
+      info.state = state
+      ms         = ->(s) { "%.fms" % (s * 1000) }
+      s          = 'rack-timeout:'
+      s << ' id='       << info.id           if info.id
+      s << ' age='      << ms[info.age]      if info.age
+      s << ' timeout='  << ms[info.timeout]  if info.timeout
+      s << ' duration=' << ms[info.duration] if info.duration
+      s << ' state='    << info.state.to_s   if info.state
       s << "\n"
+
       $stderr << s
     end
 
@@ -68,7 +69,7 @@ module Rack
       def call(env)
         @app.call(env)
       rescue Rack::Timeout::RequestAbortedError
-        Rack::Timeout.set_state_and_log!(env, :aborted)
+        Rack::Timeout.set_state_and_log!(env[ENV_INFO_KEY], :aborted)
         raise
       end
     end
