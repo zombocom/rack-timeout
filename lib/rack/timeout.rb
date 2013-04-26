@@ -8,10 +8,11 @@ module Rack
     class RequestTooOldError  < Error; end
     class RequestAbortedError < Error; end
 
-    RequestData     = Struct.new(:id, :age, :timeout, :duration, :state)
-    ENV_INFO_KEY    = 'rack-timeout.info'
-    FINAL_STATES    = [:dropped, :aborted, :completed]
-    MAX_REQUEST_AGE = 30 # seconds
+    RequestData          = Struct.new(:id, :age, :timeout, :duration, :state)
+    ENV_INFO_KEY         = 'rack-timeout.info'
+    FRAMEWORK_ERROR_KEYS = %w(sinatra.error rack.exception)
+    FINAL_STATES         = [:dropped, :aborted, :completed]
+    MAX_REQUEST_AGE      = 30 # seconds
 
     @timeout = 15
     class << self
@@ -49,8 +50,14 @@ module Rack
     def self.perform_reporting_abortion_state_in_env(env)
       yield
     rescue RequestAbortedError
-      set_state_and_log!(env[ENV_INFO_KEY], :aborted)
+      set_aborted! env
       raise
+    ensure
+      set_aborted! env if env.values_at(*FRAMEWORK_ERROR_KEYS).any? { |e| e.is_a? RequestAbortedError }
+    end
+
+    def self.set_aborted!(env)
+      set_state_and_log!(env[ENV_INFO_KEY], :aborted)
     end
 
     def self.set_state_and_log!(info, state)
