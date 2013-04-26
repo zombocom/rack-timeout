@@ -49,8 +49,8 @@ module Rack
     def self.set_state_and_log!(info, state)
       return if FINAL_STATES.include? info.state
       info.state = state
-      ms         = ->(s) { "%.fms" % (s * 1000) }
-      s          = 'rack-timeout:'
+      ms         = ->(s) { '%.fms' % (s * 1000) }
+      s          = 'source=rack-timeout'
       s << ' id='       << info.id           if info.id
       s << ' age='      << ms[info.age]      if info.age
       s << ' timeout='  << ms[info.timeout]  if info.timeout
