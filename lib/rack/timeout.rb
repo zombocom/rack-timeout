@@ -26,7 +26,7 @@ module Rack
       request_start &&= Time.at request_start.to_i / 1000.0
       request_age     = !request_start ? 0 : Time.now - request_start
       time_left       = MAX_REQUEST_AGE - request_age
-      log             = lambda { |s| $stderr.puts "rack-timeout: id=#{request_id} age=#{f request_age} #{s}"}
+      log             = lambda { |s| $stderr.puts "rack-timeout: id=#{request_id} age=#{f request_age} #{s}" }
       timeout         = [self.class.timeout, time_left].min
       (log.call "dropped"; raise RequestDroppedByRouterError) if time_left < 0
       log.call "timeout=#{f timeout} starting"
