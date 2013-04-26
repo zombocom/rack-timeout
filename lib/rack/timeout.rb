@@ -38,8 +38,13 @@ module Rack
 
       Rack::Timeout.set_state_and_log! info, :ready
       ::Timeout.timeout(info.timeout, RequestAbortedError) do
-        ready_time    = Time.now
-        response      = @app.call(env)
+        ready_time = Time.now
+        begin
+          response = @app.call(env)
+        rescue RequestAbortedError
+          Rack::Timeout.set_state_and_log! info, :aborted
+          raise
+        end
         info.duration = Time.now - ready_time
         Rack::Timeout.set_state_and_log! info, :completed
         response
