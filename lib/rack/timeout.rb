@@ -28,38 +28,49 @@ module Rack
       env['rack-timeout.timeout']     = timeout if timeout > 0
 
       if timeout <= 0
-        log env, "dropped"
+        Rack::Timeout.set_state_and_log! env, :dropped
         raise RequestTooOldError
       end
 
-      log env, "starting"
+      Rack::Timeout.set_state_and_log! env, :ready
       ::Timeout.timeout(timeout, RequestAbortedError) do
-        t0 = Time.now
-        rv = @app.call(env)
-        td = Time.now - t0
-        env['rack-timeout.completed'] = td
-        log env
-        rv
+        ready_time = Time.now
+        response = @app.call(env)
+        env['rack-timeout.duration'] = Time.now - ready_time
+        Rack::Timeout.set_state_and_log! env, :completed
+        response
       end
     end
 
-    private
+    FINAL_STATES = [:dropped, :aborted, :completed]
+    def self.set_state_and_log!(env, state)
+      env["rack-timeout.state"] = state unless FINAL_STATES.include? env["rack-timeout.state"]
 
-    def log(env, msg=nil)
-      id, age, timeout, completed = env.values_at \
-        *%w[ HTTP_HEROKU_REQUEST_ID rack-timeout.request-age rack-timeout.timeout rack-timeout.completed ]
+      id, state              = env.values_at(*%w[ HTTP_HEROKU_REQUEST_ID rack-timeout.state ])
+      age, timeout, duration = env.values_at(*%w[ rack-timeout.request-age rack-timeout.timeout rack-timeout.duration ])
+                                .map { |s| "%.fms" % (s * 1000) if s }
+
       s = "rack-timeout:"
-      s << " id="        << id if id
-      s << " age="       << ms(age) if age
-      s << " timeout="   << ms(timeout) if timeout
-      s << " completed=" << ms(completed) if completed
-      s << " "           << msg if msg
+      s << " id="       << id         if id
+      s << " age="      << age        if age
+      s << " timeout="  << timeout    if timeout
+      s << " duration=" << duration   if duration
+      s << " state="    << state.to_s if state
       s << "\n"
       $stderr << s
     end
 
-    def ms(s)
-      "%.fms" % (s * 1000) if s
+    class AbortionReporter
+      def initialize(app)
+        @app = app
+      end
+
+      def call(env)
+        @app.call(env)
+      rescue Rack::Timeout::RequestAbortedError
+        Rack::Timeout.set_state_and_log!(env, :aborted)
+        raise
+      end
     end
 
   end
