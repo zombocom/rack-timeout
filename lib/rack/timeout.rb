@@ -38,17 +38,19 @@ module Rack
 
       Rack::Timeout.set_state_and_log! info, :ready
       ::Timeout.timeout(info.timeout, RequestAbortedError) do
-        ready_time = Time.now
-        begin
-          response = @app.call(env)
-        rescue RequestAbortedError
-          Rack::Timeout.set_state_and_log! info, :aborted
-          raise
-        end
+        ready_time    = Time.now
+        response      = Rack::Timeout.perform_reporting_abortion_state_in_env(env) { @app.call(env) }
         info.duration = Time.now - ready_time
         Rack::Timeout.set_state_and_log! info, :completed
         response
       end
+    end
+
+    def self.perform_reporting_abortion_state_in_env(env)
+      yield
+    rescue RequestAbortedError
+      set_state_and_log!(env[ENV_INFO_KEY], :aborted)
+      raise
     end
 
     def self.set_state_and_log!(info, state)
@@ -72,10 +74,7 @@ module Rack
       end
 
       def call(env)
-        @app.call(env)
-      rescue Rack::Timeout::RequestAbortedError
-        Rack::Timeout.set_state_and_log!(env[ENV_INFO_KEY], :aborted)
-        raise
+        Rack::Timeout.perform_reporting_abortion_state_in_env(env) { @app.call(env) }
       end
     end
 
