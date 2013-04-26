@@ -1,5 +1,6 @@
-require RUBY_VERSION < '1.9' && RUBY_PLATFORM != 'java' ? 'system_timer' : 'timeout'
-Timeout ||= SystemTimer
+# encoding: utf-8
+raise 'ruby ≥ 1.9.1 required.' if RUBY_PLATFORM != 'java' && RUBY_VERSION < '1.9.1'
+require 'timeout'
 
 module Rack
   class Timeout
