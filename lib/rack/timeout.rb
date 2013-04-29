@@ -11,7 +11,8 @@ module Rack
     RequestDetails       = Struct.new(:id, :age, :timeout, :duration, :state)
     ENV_INFO_KEY         = 'rack-timeout.info'
     FRAMEWORK_ERROR_KEYS = %w(sinatra.error rack.exception)
-    FINAL_STATES         = [:dropped, :aborted, :completed]
+    FINAL_STATES         = [:expired, :timed_out, :completed]
+    ACCEPTABLE_STATES    = [:ready] + FINAL_STATES
     MAX_REQUEST_AGE      = 30 # seconds
 
     @timeout = 15
@@ -33,38 +34,41 @@ module Rack
       info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
 
       if time_left && time_left <= 0
-        Rack::Timeout.set_state_and_log! info, :dropped
+        Rack::Timeout.set_state! env, :expired
         raise RequestExpiryError
       end
 
-      Rack::Timeout.set_state_and_log! info, :ready
+      Rack::Timeout.set_state! env, :ready
       ::Timeout.timeout(info.timeout, RequestTimeoutError) do
         ready_time    = Time.now
-        response      = Rack::Timeout.perform_reporting_abortion_state_in_env(env) { @app.call(env) }
+        response      = Rack::Timeout.perform_block_tracking_timeout_to_env(env) { @app.call(env) }
         info.duration = Time.now - ready_time
-        Rack::Timeout.set_state_and_log! info, :completed
+        Rack::Timeout.set_state! env, :completed
         response
       end
     end
 
-    def self.perform_reporting_abortion_state_in_env(env)
+    def self.perform_block_tracking_timeout_to_env(env)
       yield
     rescue RequestTimeoutError
-      set_aborted! env
+      timed_out = true
       raise
     ensure
-      set_aborted! env if env.values_at(*FRAMEWORK_ERROR_KEYS).any? { |e| e.is_a? RequestTimeoutError }
+      timed_out ||= env.values_at(*FRAMEWORK_ERROR_KEYS).any? { |e| e.is_a? RequestTimeoutError }
+      set_state! env, :timed_out if timed_out
     end
 
-    def self.set_aborted!(env)
-      set_state_and_log!(env[ENV_INFO_KEY], :aborted)
-    end
-
-    def self.set_state_and_log!(info, state)
+    def self.set_state!(env, state)
+      raise "Invalid state: #{state.inspect}" unless ACCEPTABLE_STATES.include? state
+      info = env[ENV_INFO_KEY]
       return if FINAL_STATES.include? info.state
       info.state = state
-      ms         = ->(s) { '%.fms' % (s * 1000) }
-      s          = 'source=rack-timeout'
+      log_state_change(info)
+    end
+
+    def self.log_state_change(info)
+      ms = ->(s) { '%.fms' % (s * 1000) }
+      s  = 'source=rack-timeout'
       s << ' id='       << info.id           if info.id
       s << ' age='      << ms[info.age]      if info.age
       s << ' timeout='  << ms[info.timeout]  if info.timeout
@@ -75,13 +79,13 @@ module Rack
       $stderr << s
     end
 
-    class AbortionReporter
+    class TimeoutTracker
       def initialize(app)
         @app = app
       end
 
       def call(env)
-        Rack::Timeout.perform_reporting_abortion_state_in_env(env) { @app.call(env) }
+        Rack::Timeout.perform_block_tracking_timeout_to_env(env) { @app.call(env) }
       end
     end
 
