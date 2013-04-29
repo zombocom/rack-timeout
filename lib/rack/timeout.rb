@@ -8,7 +8,7 @@ module Rack
     class RequestTooOldError  < Error; end
     class RequestAbortedError < Error; end
 
-    RequestData          = Struct.new(:id, :age, :timeout, :duration, :state)
+    RequestDetails       = Struct.new(:id, :age, :timeout, :duration, :state)
     ENV_INFO_KEY         = 'rack-timeout.info'
     FRAMEWORK_ERROR_KEYS = %w(sinatra.error rack.exception)
     FINAL_STATES         = [:dropped, :aborted, :completed]
@@ -24,7 +24,7 @@ module Rack
     end
 
     def call(env)
-      info          = env[ENV_INFO_KEY] ||= RequestData.new
+      info          = env[ENV_INFO_KEY] ||= RequestDetails.new
       info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || SecureRandom.hex
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
       request_start = Time.at(request_start.to_i / 1000) if request_start
