@@ -5,8 +5,8 @@ require 'securerandom'
 module Rack
   class Timeout
     class Error < RuntimeError;        end
-    class RequestTooOldError  < Error; end
-    class RequestAbortedError < Error; end
+    class RequestExpiryError  < Error; end
+    class RequestTimeoutError < Error; end
 
     RequestDetails       = Struct.new(:id, :age, :timeout, :duration, :state)
     ENV_INFO_KEY         = 'rack-timeout.info'
@@ -34,11 +34,11 @@ module Rack
 
       if time_left && time_left <= 0
         Rack::Timeout.set_state_and_log! info, :dropped
-        raise RequestTooOldError
+        raise RequestExpiryError
       end
 
       Rack::Timeout.set_state_and_log! info, :ready
-      ::Timeout.timeout(info.timeout, RequestAbortedError) do
+      ::Timeout.timeout(info.timeout, RequestTimeoutError) do
         ready_time    = Time.now
         response      = Rack::Timeout.perform_reporting_abortion_state_in_env(env) { @app.call(env) }
         info.duration = Time.now - ready_time
@@ -49,11 +49,11 @@ module Rack
 
     def self.perform_reporting_abortion_state_in_env(env)
       yield
-    rescue RequestAbortedError
+    rescue RequestTimeoutError
       set_aborted! env
       raise
     ensure
-      set_aborted! env if env.values_at(*FRAMEWORK_ERROR_KEYS).any? { |e| e.is_a? RequestAbortedError }
+      set_aborted! env if env.values_at(*FRAMEWORK_ERROR_KEYS).any? { |e| e.is_a? RequestTimeoutError }
     end
 
     def self.set_aborted!(env)
