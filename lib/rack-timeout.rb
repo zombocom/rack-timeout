@@ -1,5 +1,5 @@
 # encoding: utf-8
-require_relative 'rack/timeout'
+require 'rack/timeout'
 
 if defined?(Rails) && [3,4].include?(Rails::VERSION::MAJOR)
   class Rack::Timeout::Railtie < Rails::Railtie
