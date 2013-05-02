@@ -10,7 +10,7 @@ module Rack
 
     RequestDetails       = Struct.new(:id, :age, :timeout, :duration, :state)
     ENV_INFO_KEY         = 'rack-timeout.info'
-    FRAMEWORK_ERROR_KEYS = %w(sinatra.error rack.exception)
+    FRAMEWORK_ERROR_KEYS = %w(sinatra.error rack.exception) # No idea what actually sets rack.exception but a lot of other libraries seem to reference it.
     FINAL_STATES         = [:expired, :timed_out, :completed]
     ACCEPTABLE_STATES    = [:ready] + FINAL_STATES
     MAX_REQUEST_AGE      = 30 # seconds
@@ -48,16 +48,19 @@ module Rack
       end
     end
 
+    # used in #call and TimeoutTracker
     def self._perform_block_tracking_timeout_to_env(env)
       yield
     rescue RequestTimeoutError
       timed_out = true
       raise
     ensure
+      # I do not appreciate having to handle framework business in a rack-level library, but can't see another way around sinatra's error handling.
       timed_out ||= env.values_at(*FRAMEWORK_ERROR_KEYS).any? { |e| e.is_a? RequestTimeoutError }
       _set_state! env, :timed_out if timed_out
     end
 
+    # used internally
     def self._set_state!(env, state)
       raise "Invalid state: #{state.inspect}" unless ACCEPTABLE_STATES.include? state
       info = env[ENV_INFO_KEY]
@@ -79,6 +82,8 @@ module Rack
       $stderr << s
     end
 
+    # A second middleware to be added last in rails; ensures timed_out states get intercepted properly.
+    # This works as long as it's after ActionDispatch::ShowExceptions and ActionDispatch::DebugExceptions in the middleware list, which happens normally when added via `app.config.middleware.use`.
     class TimeoutTracker
       def initialize(app)
         @app = app
