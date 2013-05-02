@@ -34,31 +34,31 @@ module Rack
       info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
 
       if time_left && time_left <= 0
-        Rack::Timeout.set_state! env, :expired
+        Rack::Timeout._set_state! env, :expired
         raise RequestExpiryError
       end
 
-      Rack::Timeout.set_state! env, :ready
+      Rack::Timeout._set_state! env, :ready
       ::Timeout.timeout(info.timeout, RequestTimeoutError) do
         ready_time    = Time.now
-        response      = Rack::Timeout.perform_block_tracking_timeout_to_env(env) { @app.call(env) }
+        response      = Rack::Timeout._perform_block_tracking_timeout_to_env(env) { @app.call(env) }
         info.duration = Time.now - ready_time
-        Rack::Timeout.set_state! env, :completed
+        Rack::Timeout._set_state! env, :completed
         response
       end
     end
 
-    def self.perform_block_tracking_timeout_to_env(env)
+    def self._perform_block_tracking_timeout_to_env(env)
       yield
     rescue RequestTimeoutError
       timed_out = true
       raise
     ensure
       timed_out ||= env.values_at(*FRAMEWORK_ERROR_KEYS).any? { |e| e.is_a? RequestTimeoutError }
-      set_state! env, :timed_out if timed_out
+      _set_state! env, :timed_out if timed_out
     end
 
-    def self.set_state!(env, state)
+    def self._set_state!(env, state)
       raise "Invalid state: #{state.inspect}" unless ACCEPTABLE_STATES.include? state
       info = env[ENV_INFO_KEY]
       return if FINAL_STATES.include? info.state
@@ -85,7 +85,7 @@ module Rack
       end
 
       def call(env)
-        Rack::Timeout.perform_block_tracking_timeout_to_env(env) { @app.call(env) }
+        Rack::Timeout._perform_block_tracking_timeout_to_env(env) { @app.call(env) }
       end
     end
 
