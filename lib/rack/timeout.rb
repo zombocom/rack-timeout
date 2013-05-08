@@ -66,20 +66,7 @@ module Rack
       info = env[ENV_INFO_KEY]
       return if FINAL_STATES.include? info.state
       info.state = state
-      log_state_change(info)
-    end
-
-    def self.log_state_change(info)
-      ms = ->(s) { '%.fms' % (s * 1000) }
-      s  = 'source=rack-timeout'
-      s << ' id='       << info.id           if info.id
-      s << ' age='      << ms[info.age]      if info.age
-      s << ' timeout='  << ms[info.timeout]  if info.timeout
-      s << ' duration=' << ms[info.duration] if info.duration
-      s << ' state='    << info.state.to_s   if info.state
-      s << "\n"
-
-      $stderr << s
+      notify_state_change_observers(env)
     end
 
     # A second middleware to be added last in rails; ensures timed_out states get intercepted properly.
@@ -92,6 +79,42 @@ module Rack
       def call(env)
         Rack::Timeout._perform_block_tracking_timeout_to_env(env) { @app.call(env) }
       end
+    end
+
+
+    ### state change notification-related methods
+
+    OBSERVER_CALLBACK_METHOD_NAME = :rack_timeout_request_did_change_state_in
+    @state_change_observers       = {}
+
+    # Registers an object or a block to be called back when a request changes state in rack-timeout.
+    #
+    # `id` is anything that uniquely identifies this particular callback, mostly so it may be removed via `unregister_state_change_observer`.
+    #
+    # The second parameter can be either an object that responds to `rack_timeout_request_did_change_state_in(env)` or a block. The object and the block cannot be both specified at the same time.
+    #
+    # Example calls:
+    #     Rack::Timeout.register_state_change_observer(:foo_reporter, FooStateReporter.new)
+    #     Rack::Timeout.register_state_change_observer(:bar) { |env| do_bar_things(env) }
+    def self.register_state_change_observer(id, object = nil, &callback)
+      raise RuntimeError,  "An observer with the id #{id.inspect} is already set." if @state_change_observers.key? id
+      raise ArgumentError, "Pass either a callback object or a block; never both." unless [object, callback].compact.length == 1
+      raise RuntimeError,  "Object must respond to rack_timeout_request_did_change_state_in" if object && !object.respond_to?(OBSERVER_CALLBACK_METHOD_NAME)
+      callback.singleton_class.send :alias_method, OBSERVER_CALLBACK_METHOD_NAME, :call if callback
+      @state_change_observers[id] = object || callback
+    end
+
+    # Removes the observer with the given id
+    def self.unregister_state_change_observer(id)
+      @state_change_observers.delete id
+    end
+
+
+    private
+
+    # Sends out the notifications. Called internally at the end of `set_state!`
+    def self.notify_state_change_observers(env)
+      @state_change_observers.values.each { |observer| observer.send(OBSERVER_CALLBACK_METHOD_NAME, env) }
     end
 
   end
