@@ -48,7 +48,7 @@ Heroku Niceties
     received within 30s, so it makes no sense for the application to process a request it'll never
     be able to respond to.
 
-    The 30s maximum age is set in in `Rack::Timeout::MAX_REQUEST_AGE`, and should generally not be
+    The 30s maximum age is set in `Rack::Timeout::MAX_REQUEST_AGE`, and should generally not be
     altered.
 
 *   With every line logged, Rack::Timeout includes a request ID. Generally it'll generate its own
@@ -114,8 +114,8 @@ itself descends from `RuntimeError`. They are:
 
 *   `Rack::Timeout::RequestExpiryError`: this is raised when a request is skipped for being too old
     (see the X-Request-Start bit under the Heroku Niceties section). This cannot generally be
-    rescued from in a Rails controller action as it happens before the request has a chance to reach
-    Rails.
+    rescued from inside a Rails controller action as it happens before the request has a chance to
+    reach Rails.
 
     This shouldn't be any different for other frameworks, unless you have something above
     Rack::Timeout in the middleware stack, which you generally shouldn't.
