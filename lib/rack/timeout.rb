@@ -1,5 +1,4 @@
 # encoding: utf-8
-require 'timeout'
 require 'securerandom'
 
 module Rack
@@ -10,7 +9,6 @@ module Rack
 
     RequestDetails       = Struct.new(:id, :age, :timeout, :duration, :state)
     ENV_INFO_KEY         = 'rack-timeout.info'
-    FRAMEWORK_ERROR_KEYS = %w(sinatra.error rack.exception) # No idea what actually sets rack.exception but a lot of other libraries seem to reference it.
     FINAL_STATES         = [:expired, :timed_out, :completed]
     ACCEPTABLE_STATES    = [:ready] + FINAL_STATES
     MAX_REQUEST_AGE      = 30 # seconds
@@ -39,25 +37,24 @@ module Rack
       end
 
       Rack::Timeout._set_state! env, :ready
-      ::Timeout.timeout(info.timeout, RequestTimeoutError) do
-        ready_time    = Time.now
-        response      = Rack::Timeout._perform_block_tracking_timeout_to_env(env) { @app.call(env) }
-        info.duration = Time.now - ready_time
-        Rack::Timeout._set_state! env, :completed
-        response
-      end
-    end
+      ready_time = Time.now
 
-    # used in #call and TimeoutTracker
-    def self._perform_block_tracking_timeout_to_env(env)
-      yield
-    rescue RequestTimeoutError
-      timed_out = true
-      raise
-    ensure
-      # I do not appreciate having to handle framework business in a rack-level library, but can't see another way around sinatra's error handling.
-      timed_out ||= env.values_at(*FRAMEWORK_ERROR_KEYS).any? { |e| e.is_a? RequestTimeoutError }
-      _set_state! env, :timed_out if timed_out
+      begin
+        app_thread     = Thread.current
+        timeout_thread = Thread.start do
+          sleep(info.timeout)
+          Rack::Timeout._set_state! env, :timed_out
+          app_thread.raise(RequestTimeoutError)
+        end
+        response = @app.call(env)
+      ensure
+        timeout_thread.kill
+        timeout_thread.join
+      end
+
+      info.duration = Time.now - ready_time
+      Rack::Timeout._set_state! env, :completed
+      response
     end
 
     # used internally
@@ -67,18 +64,6 @@ module Rack
       return if FINAL_STATES.include? info.state
       info.state = state
       notify_state_change_observers(env)
-    end
-
-    # A second middleware to be added last in rails; ensures timed_out states get intercepted properly.
-    # This works as long as it's after ActionDispatch::ShowExceptions and ActionDispatch::DebugExceptions in the middleware list, which happens normally when added via `app.config.middleware.use`.
-    class TimeoutTracker
-      def initialize(app)
-        @app = app
-      end
-
-      def call(env)
-        Rack::Timeout._perform_block_tracking_timeout_to_env(env) { @app.call(env) }
-      end
     end
 
 
