@@ -26,7 +26,7 @@ module Rack
 
     def call(env)
       info          = env[ENV_INFO_KEY] ||= RequestDetails.new
-      info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || SecureRandom.hex
+      info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
       request_start = Time.at(request_start.to_i / 1000) if request_start
       info.age      = Time.now - request_start           if request_start
