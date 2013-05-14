@@ -33,7 +33,7 @@ module Rack
 
       if time_left && time_left <= 0
         Rack::Timeout._set_state! env, :expired
-        raise RequestExpiryError
+        raise RequestExpiryError, "Request older than #{MAX_REQUEST_AGE} seconds."
       end
 
       Rack::Timeout._set_state! env, :ready
@@ -44,7 +44,7 @@ module Rack
         timeout_thread = Thread.start do
           sleep(info.timeout)
           Rack::Timeout._set_state! env, :timed_out
-          app_thread.raise(RequestTimeoutError)
+          app_thread.raise(RequestTimeoutError, "Request ran for longer than #{info.timeout} seconds.")
         end
         response = @app.call(env)
       ensure
