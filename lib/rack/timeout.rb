@@ -7,11 +7,10 @@ module Rack
     class RequestExpiryError  < Error; end
     class RequestTimeoutError < Error; end
 
-    RequestDetails       = Struct.new(:id, :age, :timeout, :duration, :state)
-    ENV_INFO_KEY         = 'rack-timeout.info'
-    FINAL_STATES         = [:expired, :timed_out, :completed]
-    ACCEPTABLE_STATES    = [:ready] + FINAL_STATES
-    MAX_REQUEST_AGE      = 30 # seconds
+    RequestDetails  = Struct.new(:id, :age, :timeout, :duration, :state)
+    ENV_INFO_KEY    = 'rack-timeout.info'
+    VALID_STATES    = [:ready, :expired, :timed_out, :completed]
+    MAX_REQUEST_AGE = 30 # seconds
 
     @timeout = 15
     class << self
@@ -59,9 +58,8 @@ module Rack
 
     # used internally
     def self._set_state!(env, state)
-      raise "Invalid state: #{state.inspect}" unless ACCEPTABLE_STATES.include? state
+      raise "Invalid state: #{state.inspect}" unless VALID_STATES.include? state
       info = env[ENV_INFO_KEY]
-      return if FINAL_STATES.include? info.state
       info.state = state
       notify_state_change_observers(env)
     end
