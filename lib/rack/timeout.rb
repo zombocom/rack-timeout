@@ -9,7 +9,7 @@ module Rack
 
     RequestDetails  = Struct.new(:id, :age, :timeout, :duration, :state)
     ENV_INFO_KEY    = 'rack-timeout.info'
-    VALID_STATES    = [:ready, :expired, :timed_out, :completed]
+    VALID_STATES    = [:ready, :active, :expired, :timed_out, :completed]
     MAX_REQUEST_AGE = 30 # seconds
 
     @timeout = 15
@@ -41,7 +41,13 @@ module Rack
       begin
         app_thread     = Thread.current
         timeout_thread = Thread.start do
-          sleep(info.timeout)
+          loop do
+            info.duration = Time.now - ready_time
+            sleep_seconds = [1, info.timeout - info.duration].min
+            break if sleep_seconds <= 0
+            Rack::Timeout._set_state! env, :active
+            sleep(sleep_seconds)
+          end
           Rack::Timeout._set_state! env, :timed_out
           app_thread.raise(RequestTimeoutError, "Request ran for longer than #{info.timeout} seconds.")
         end

@@ -12,6 +12,7 @@ module Rack
       SIMPLE_FORMATTER = ->(severity, timestamp, progname, msg) { "#{msg} at=#{severity.downcase}\n" }
       DEFAULT_LEVEL    = INFO
       STATE_LOG_LEVEL  = { ready:     INFO,
+                           active:    DEBUG,
                            completed: INFO,
                            expired:   ERROR,
                            timed_out: ERROR,
