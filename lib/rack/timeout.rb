@@ -11,10 +11,10 @@ module Rack
     ENV_INFO_KEY    = 'rack-timeout.info'
     VALID_STATES    = [:ready, :active, :expired, :timed_out, :completed]
     MAX_REQUEST_AGE = 30 # seconds
-
-    @timeout = 15
+    @overtime       = 60 # seconds by which to extend MAX_REQUEST_AGE for requests that have a body (and have hence potentially waited long for the body to be received.)
+    @timeout        = 15 # seconds
     class << self
-      attr_accessor :timeout
+      attr_accessor :timeout, :overtime
     end
 
     def initialize(app)
@@ -27,7 +27,9 @@ module Rack
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
       request_start = Time.at(request_start.to_i / 1000) if request_start
       info.age      = Time.now - request_start           if request_start
+      has_body      = env["rack.input"].size > 0         if env["rack.input"]
       time_left     = MAX_REQUEST_AGE - info.age         if info.age
+      time_left    += self.class.overtime                if time_left && has_body
       info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
 
       if time_left && time_left <= 0
