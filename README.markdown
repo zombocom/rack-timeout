@@ -1,14 +1,17 @@
 Rack::Timeout
 =============
 
-Abort requests that are taking too long; a subclass of `Rack::Timeout::Error` will be raised.
+Abort requests that are taking too long; a subclass of `Rack::Timeout::Error` is raised.
+
+A generous timeout of 15s is the default. It's recommended to set the timeout as low as
+realistically viable for your application.
 
 
 Usage
 -----
 
-Setup for current versions of Rails, Rack, Ruby, and Bundler. See the Compatibility section at the
-end for legacy versions.
+The following covers currently supported versions of Rails, Rack, Ruby, and Bundler. See the
+Compatibility section at the end for legacy versions.
 
 ### Rails apps
 
@@ -33,13 +36,13 @@ Heroku Niceties
 ---------------
 
 *   Normally, Rack::Timeout always times out a request using the `Rack::Timeout.timeout` setting.
-    Heroku offers the [`X-Request-Start`][X-Request-Start] HTTP header, which is a timestamp
-    indicating the time the request first enters the routing infrastructure.
+    Heroku makes available the [`X-Request-Start`][X-Request-Start] HTTP header, which is a
+    timestamp indicating the time the request first enters the routing infrastructure.
 
     If the `X-Request-Start` HTTP header is present, Rack::Timeout will take the age of the request
     into consideration when determining the timeout to use. If a request is older than 30 seconds,
-    it's dropped immediately. Otherwise, the timeout is the number of seconds left to 30 seconds,
-    or the value of `Rack::Timeout.timeout`, whichever is shorter.
+    it's dropped immediately. Otherwise, the timeout is the number of seconds left for the request
+    to be 30 seconds old, or the value of `Rack::Timeout.timeout`, whichever is shorter.
 
     So, if a request has been sitting in the queue for 25s, and `Rack::Timeout.timeout` is set to
     10s, the timeout used will be 5s, because `30 − 25 = 5`, and `5 < 10`.
