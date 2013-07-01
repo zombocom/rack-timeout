@@ -1,3 +1,6 @@
+README is not entirely in sync with this release. E.g. the overtime stuff is not present in this
+release. There may be other discrepancies.
+
 Rack::Timeout
 =============
 
