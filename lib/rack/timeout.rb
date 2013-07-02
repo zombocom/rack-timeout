@@ -67,8 +67,7 @@ module Rack
     # used internally
     def self._set_state!(env, state)
       raise "Invalid state: #{state.inspect}" unless VALID_STATES.include? state
-      info = env[ENV_INFO_KEY]
-      info.state = state
+      env[ENV_INFO_KEY].state = state
       notify_state_change_observers(env)
     end
 
