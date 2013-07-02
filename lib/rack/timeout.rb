@@ -44,7 +44,7 @@ module Rack
         timeout_thread = Thread.start do
           loop do
             info.duration = Time.now - ready_time
-            sleep_seconds = [1, info.timeout - info.duration].min
+            sleep_seconds = [1 - (info.duration % 1), info.timeout - info.duration].min
             break if sleep_seconds <= 0
             Rack::Timeout._set_state! env, :active
             sleep(sleep_seconds)
