@@ -23,6 +23,13 @@ module Rack
     end
 
     def call(env)
+      if @options[:ignore]
+        if env["REQUEST_PATH"] and env["REQUEST_PATH"].match @options[:ignore]
+          puts "Rack::Timeout: Ignored path #{env['REQUEST_PATH']}"
+          return @app.call(env)
+        end
+      end
+      
       info          = env[ENV_INFO_KEY] ||= RequestDetails.new
       info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
@@ -31,13 +38,6 @@ module Rack
       time_left     = MAX_REQUEST_AGE - info.age         if info.age
       time_left    += self.class.overtime                if time_left && self.class._request_has_body?(env)
       info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
-
-      if @options[:ignore]
-        if env["REQUEST_PATH"] and env["REQUEST_PATH"].match @options[:ignore]
-          puts "Rack::Timeout: Ignored path #{env['REQUEST_PATH']}"
-          return @app.call(env)
-        end
-      end
 
       if time_left && time_left <= 0
         Rack::Timeout._set_state! env, :expired
