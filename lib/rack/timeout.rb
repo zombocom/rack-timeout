@@ -33,7 +33,7 @@ module Rack
       info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
 
       if @options[:ignore]
-        if env["REQUEST_PATH"].match @options[:ignore]
+        if env["REQUEST_PATH"] and env["REQUEST_PATH"].match @options[:ignore]
           puts "Rack::Timeout: Ignored path #{env['REQUEST_PATH']}"
           return @app.call(env)
         end
