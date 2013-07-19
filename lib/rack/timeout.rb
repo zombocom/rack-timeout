@@ -17,8 +17,9 @@ module Rack
       attr_accessor :timeout, :overtime
     end
 
-    def initialize(app)
+    def initialize(app, options={})
       @app = app
+      @options = options
     end
 
     def call(env)
@@ -30,6 +31,13 @@ module Rack
       time_left     = MAX_REQUEST_AGE - info.age         if info.age
       time_left    += self.class.overtime                if time_left && self.class._request_has_body?(env)
       info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
+
+      if @options[:ignore]
+        if env["REQUEST_PATH"].match @options[:ignore]
+          puts "Rack::Timeout: Ignored path #{env['REQUEST_PATH']}"
+          return @app.call(env)
+        end
+      end
 
       if time_left && time_left <= 0
         Rack::Timeout._set_state! env, :expired
