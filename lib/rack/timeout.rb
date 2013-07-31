@@ -17,11 +17,19 @@ module Rack
       attr_accessor :timeout, :overtime
     end
 
-    def initialize(app)
+    def initialize(app, options={})
       @app = app
+      @options = options
     end
 
     def call(env)
+      if @options[:ignore]
+        if env["REQUEST_PATH"] and env["REQUEST_PATH"].match @options[:ignore]
+          puts "Rack::Timeout: Ignored path #{env['REQUEST_PATH']}"
+          return @app.call(env)
+        end
+      end
+      
       info          = env[ENV_INFO_KEY] ||= RequestDetails.new
       info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms

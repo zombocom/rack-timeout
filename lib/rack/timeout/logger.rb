@@ -57,6 +57,7 @@ module Rack
 
       # generates the actual log string
       def log_state_change(info)
+        return
         add(STATE_LOG_LEVEL[info.state]) do
           s  = 'source=rack-timeout'
           s << ' id='       << info.id           if info.id
