@@ -2,10 +2,10 @@
 require 'rack/timeout'
 require 'rack/timeout/logger'
 
-if defined?(Rails) && [3,4].include?(Rails::VERSION::MAJOR)
+if defined?(Rails) && [3,4].include?(Rails::VERSION::MAJOR) && !Rails.env.test?
   class Rack::Timeout::Railtie < Rails::Railtie
     initializer('rack-timeout.prepend') { |app| app.config.middleware.insert 0, Rack::Timeout }
   end
 end
 
-Rack::Timeout::StateChangeLogger.register!
+Rack::Timeout::StateChangeLogger.register! unless defined?(Rails) && Rails.env.test?
