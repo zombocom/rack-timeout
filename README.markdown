@@ -24,17 +24,6 @@ create an initializer file:
     # config/initializers/timeout.rb
     Rack::Timeout.timeout = 10  # seconds
 
-### Rails 4 app
-
-You will need to register the middleware
-
-```ruby
-class Application < Rails::Application
-  ...
-  config.middleware.use Rack::Timeout
-end
-```
-
 ### Sinatra and other Rack apps
 
     # config.ru
