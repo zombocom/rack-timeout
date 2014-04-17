@@ -246,5 +246,5 @@ For applications running Ruby 1.8.x and/or Rails 2.x, use [version 0.0.4][v0.0.4
 
 
 ---
-Copyright © 2010-2013 Caio Chassot, released under the MIT license  
+Copyright © 2010-2013 Caio Chassot, released under the MIT license
 <http://github.com/kch/rack-timeout>
