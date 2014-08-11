@@ -8,11 +8,14 @@ module Rack
     class RequestTimeoutError < Error; end
 
     RequestDetails  = Struct.new(:id, :age, :timeout, :duration, :state)
+
     ENV_INFO_KEY    = 'rack-timeout.info'
     VALID_STATES    = [:ready, :active, :expired, :timed_out, :completed]
+
     MAX_REQUEST_AGE = 30 # seconds
-    @overtime       = 60 # seconds by which to extend MAX_REQUEST_AGE for requests that have a body (and have hence potentially waited long for the body to be received.)
-    @timeout        = 15 # seconds
+
+    @overtime       = 60 # seconds by which to extend timeout for requests that have a body (and have hence potentially waited long for the body to be received.)
+    @timeout        = MAX_REQUEST_AGE # seconds
     class << self
       attr_accessor :timeout, :overtime
     end
@@ -27,13 +30,13 @@ module Rack
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
       request_start = Time.at(request_start.to_f / 1000) if request_start
       info.age      = Time.now - request_start           if request_start
-      time_left     = MAX_REQUEST_AGE - info.age         if info.age
+      time_left     = self.class.timeout - info.age      if info.age
       time_left    += self.class.overtime                if time_left && self.class._request_has_body?(env)
       info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
 
       if time_left && time_left <= 0
         Rack::Timeout._set_state! env, :expired
-        raise RequestExpiryError, "Request older than #{MAX_REQUEST_AGE} seconds."
+        raise RequestExpiryError, "Request older than #{time_left} seconds."
       end
 
       Rack::Timeout._set_state! env, :ready
