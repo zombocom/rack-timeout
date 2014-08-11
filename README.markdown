@@ -215,10 +215,10 @@ The default log level for Rack::Timeout is `INFO`, but can be affected via:
 
         Rack::Timeout.logger.level = ::Logger::DEBUG
 
-Logging is enabled by default if Rack::Timeout is loaded via the `rack-timeout` file (recommended),
-but can be removed by unregistering its observer:
+Logging is disabled by default.
+It can be enabled by registering its observer:
 
-    Rack::Timeout.unregister_state_change_observer(:logger)
+    Rack::Timeout::StateChangeLogger.register!
 
 Each log line is a set of `key=value` pairs, containing the entries from the
 `env["rack-timeout.info"]` struct that are not `nil`. See the Request Lifetime section above for a
