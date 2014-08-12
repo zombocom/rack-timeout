@@ -7,5 +7,3 @@ if defined?(Rails) && [3,4].include?(Rails::VERSION::MAJOR)
     initializer('rack-timeout.prepend') { |app| app.config.middleware.insert 0, Rack::Timeout }
   end
 end
-
-Rack::Timeout::StateChangeLogger.register!
