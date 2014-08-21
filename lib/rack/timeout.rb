@@ -27,9 +27,10 @@ module Rack
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
       request_start = Time.at(request_start.to_f / 1000) if request_start
       info.age      = Time.now - request_start           if request_start
-      time_left     = MAX_REQUEST_AGE - info.age         if info.age
-      time_left    += self.class.overtime                if time_left && self.class._request_has_body?(env)
-      info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
+      time_left     = self.class.timeout
+      time_left    -= info.age                           if info.age
+      time_left    += self.class.overtime                if self.class._request_has_body?(env)
+      info.timeout  = time_left
 
       if time_left && time_left <= 0
         Rack::Timeout._set_state! env, :expired
