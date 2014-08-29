@@ -24,8 +24,17 @@ module Rack
     def call(env)
       info          = env[ENV_INFO_KEY] ||= RequestDetails.new
       info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
-      request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
-      request_start = Time.at(request_start.to_f / 1000) if request_start
+
+      # unix timestamp in ms OR s (heroku does ms, nginx likes s)
+      request_start = if (timestr = env['HTTP_X_REQUEST_START'])
+        timestamp = timestr.to_f
+        if (seconds = Time.at(timestamp)) > Time.now # looks like it was in the future, must be ms
+          Time.at(timestamp / 1000)
+        else
+          seconds
+        end
+      end
+
       info.age      = Time.now - request_start           if request_start
       time_left     = self.class.timeout
       time_left    -= info.age                           if info.age

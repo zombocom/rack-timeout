@@ -12,10 +12,32 @@ describe Rack::Timeout do
 
     context "when the timeout is set" do
       before do
-        Rack::Timeout.timeout = 1
+        Rack::Timeout.timeout = timeout
+      end
+
+      context 'when the request has a HTTP_X_REQUEST_START' do
+        let(:timeout) { 4 }
+
+        context 'in s' do
+          before { env['HTTP_X_REQUEST_START'] = ((Time.now - 1).to_f).to_s }
+
+          it 'does not time out' do
+            expect { call }.to_not raise_error
+          end
+        end
+
+        context 'in ms' do
+          before { env['HTTP_X_REQUEST_START'] = ((Time.now - 1).to_f * 1000).to_s }
+
+          it 'does not time out' do
+            expect { call }.to_not raise_error
+          end
+        end
       end
 
       context "when the request takes too long" do
+        let(:timeout) { 1 }
+
         it 'raises a timeout error' do
           expect { call }.to raise_error(Rack::Timeout::RequestTimeoutError)
         end
