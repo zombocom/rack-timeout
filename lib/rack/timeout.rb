@@ -7,7 +7,7 @@ module Rack
     class RequestExpiryError  < Error; end
     class RequestTimeoutError < Error; end
 
-    RequestDetails  = Struct.new(:id, :age, :timeout, :duration, :state)
+    RequestDetails  = Struct.new(:id, :wait, :timeout, :duration, :state)
     ENV_INFO_KEY    = 'rack-timeout.info'
     VALID_STATES    = [:ready, :active, :expired, :timed_out, :completed]
     MAX_REQUEST_AGE = 30 # seconds
@@ -26,8 +26,8 @@ module Rack
       info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
       request_start = Time.at(request_start.to_f / 1000) if request_start
-      info.age      = Time.now - request_start           if request_start
-      time_left     = MAX_REQUEST_AGE - info.age         if info.age
+      info.wait     = Time.now - request_start           if request_start
+      time_left     = MAX_REQUEST_AGE - info.wait        if info.wait
       time_left    += self.class.overtime                if time_left && self.class._request_has_body?(env)
       info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
 

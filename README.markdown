@@ -98,7 +98,7 @@ containing the following fields:
 *   `id`: a unique ID per request. Either `Heroku-Request-ID`, `X-Request-ID`, or a random ID
     generated internally.
 
-*   `age`: time in seconds since `X-Request-Start` when the request is first seen by Rack::Timeout.
+*   `wait`: time in seconds since `X-Request-Start` when the request is first seen by Rack::Timeout.
     Only set if `X-Request-Start` is present.
 
 *   `timeout`: timeout to be used, in seconds. Generally `Rack::Timeout.timeout`, unless
@@ -222,14 +222,14 @@ but can be removed by unregistering its observer:
 
 Each log line is a set of `key=value` pairs, containing the entries from the
 `env["rack-timeout.info"]` struct that are not `nil`. See the Request Lifetime section above for a
-description of each field. Note that while the values for `age`, `timeout`, and `duration` are
+description of each field. Note that while the values for `wait`, `timeout`, and `duration` are
 stored internally as seconds, they are logged as milliseconds for readability.
 
 A sample log excerpt might look like:
 
-    source=rack-timeout id=13793c age=369ms timeout=10000ms state=ready at=info
-    source=rack-timeout id=13793c age=369ms timeout=10000ms duration=15ms state=completed at=info
-    source=rack-timeout id=ea7bd3 age=371ms timeout=10000ms state=timed_out at=error
+    source=rack-timeout id=13793c wait=369ms timeout=10000ms state=ready at=info
+    source=rack-timeout id=13793c wait=369ms timeout=10000ms duration=15ms state=completed at=info
+    source=rack-timeout id=ea7bd3 wait=371ms timeout=10000ms state=timed_out at=error
 
 (IDs shortened for readability.)
 
