@@ -104,7 +104,7 @@ containing the following fields:
 *   `timeout`: timeout to be used, in seconds. Generally `Rack::Timeout.timeout`, unless
     `X-Request-Start` is present. See discussion above, under the Heroku Niceties section.
 
-*   `duration`: set after a request completes (or times out). The time in seconds it took. This is
+*   `service`: set after a request completes (or times out). The time in seconds it took. This is
     also updated while a request is still active, around every second, with the time it's taken so
     far.
 
@@ -222,13 +222,13 @@ but can be removed by unregistering its observer:
 
 Each log line is a set of `key=value` pairs, containing the entries from the
 `env["rack-timeout.info"]` struct that are not `nil`. See the Request Lifetime section above for a
-description of each field. Note that while the values for `wait`, `timeout`, and `duration` are
+description of each field. Note that while the values for `wait`, `timeout`, and `service` are
 stored internally as seconds, they are logged as milliseconds for readability.
 
 A sample log excerpt might look like:
 
     source=rack-timeout id=13793c wait=369ms timeout=10000ms state=ready at=info
-    source=rack-timeout id=13793c wait=369ms timeout=10000ms duration=15ms state=completed at=info
+    source=rack-timeout id=13793c wait=369ms timeout=10000ms service=15ms state=completed at=info
     source=rack-timeout id=ea7bd3 wait=371ms timeout=10000ms state=timed_out at=error
 
 (IDs shortened for readability.)

@@ -7,7 +7,7 @@ module Rack
     class RequestExpiryError  < Error; end
     class RequestTimeoutError < Error; end
 
-    RequestDetails  = Struct.new(:id, :wait, :timeout, :duration, :state)
+    RequestDetails  = Struct.new(:id, :wait, :timeout, :service, :state)
     ENV_INFO_KEY    = 'rack-timeout.info'
     VALID_STATES    = [:ready, :active, :expired, :timed_out, :completed]
     MAX_REQUEST_AGE = 30 # seconds
@@ -43,8 +43,8 @@ module Rack
         app_thread     = Thread.current
         timeout_thread = Thread.start do
           loop do
-            info.duration = Time.now - ready_time
-            sleep_seconds = [1 - (info.duration % 1), info.timeout - info.duration].min
+            info.service  = Time.now - ready_time
+            sleep_seconds = [1 - (info.service % 1), info.timeout - info.service].min
             break if sleep_seconds <= 0
             Rack::Timeout._set_state! env, :active
             sleep(sleep_seconds)
@@ -58,7 +58,7 @@ module Rack
         timeout_thread.join
       end
 
-      info.duration = Time.now - ready_time
+      info.service = Time.now - ready_time
       Rack::Timeout._set_state! env, :completed
       response
     end

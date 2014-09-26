@@ -59,11 +59,11 @@ module Rack
       def log_state_change(info)
         add(STATE_LOG_LEVEL[info.state]) do
           s  = 'source=rack-timeout'
-          s << ' id='       << info.id           if info.id
-          s << ' age='      << ms(info.age)      if info.age
-          s << ' timeout='  << ms(info.timeout)  if info.timeout
-          s << ' duration=' << ms(info.duration) if info.duration
-          s << ' state='    << info.state.to_s   if info.state
+          s << ' id='      << info.id          if info.id
+          s << ' wait='    << ms(info.wait)    if info.wait
+          s << ' timeout=' << ms(info.timeout) if info.timeout
+          s << ' service=' << ms(info.service) if info.service
+          s << ' state='   << info.state.to_s  if info.state
           s
         end
       end
