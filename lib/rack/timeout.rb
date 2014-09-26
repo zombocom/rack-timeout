@@ -22,6 +22,8 @@ module Rack
     end
 
     def call(env)
+      return @app.call(env) if self.class.timeout.zero?
+
       info          = env[ENV_INFO_KEY] ||= RequestDetails.new
       info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
       request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
