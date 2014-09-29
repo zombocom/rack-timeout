@@ -3,55 +3,102 @@ require 'securerandom'
 
 module Rack
   class Timeout
-    class Error < RuntimeError;        end
-    class RequestExpiryError  < Error; end
-    class RequestTimeoutError < Error; end
+    class Error < RuntimeError;        end # superclass for the following…
+    class RequestExpiryError  < Error; end # raised when a request is dropped without being given a chance to run (because too old)
+    class RequestTimeoutError < Error; end # raised when a request has run for too long
 
-    RequestDetails  = Struct.new(:id, :wait, :timeout, :service, :state)
-    ENV_INFO_KEY    = 'rack-timeout.info'
-    VALID_STATES    = [:ready, :active, :expired, :timed_out, :completed]
-    MAX_REQUEST_AGE = 30 # seconds
-    @overtime       = 60 # seconds by which to extend MAX_REQUEST_AGE for requests that have a body (and have hence potentially waited long for the body to be received.)
-    @timeout        = 15 # seconds
+    RequestDetails = Struct.new(
+      :id,        # a unique identifier for the request. informative-only.
+      :wait,      # seconds the request spent in the web server before being serviced by rack
+      :service,   # time rack spent processing the request (updated ~ every second)
+      :timeout,   # the actual computed timeout to be used for this request
+      :state,     # the request's current state, see below:
+      )
+    VALID_STATES = [
+      :expired,   # The request was too old by the time it reached rack (see wait_timeout, wait_overtime)
+      :ready,     # We're about to start processing this request
+      :active,    # This request is currently being handled
+      :timed_out, # This request has run for too long and we're raising a timeout error in it
+      :completed, # We're done with this request (also set after having timed out a request)
+      ]
+    ENV_INFO_KEY = 'rack-timeout.info' # key under which each request's RequestDetails instance is stored in its env.
+
+    # helper methods to setup getter/setters for timeout properties. Ensure they're always positive numbers or false. When set to false (or 0), their behaviour is disabled.
     class << self
-      attr_accessor :timeout, :overtime
+      def set_timeout_property(property_name, value)
+        unless value == false || (value.is_a?(Numeric) && value >= 0)
+          raise ArgumentError, "value for #{property_name} should be false, zero, or a positive number."
+        end
+        value = false if value.zero? # zero means we're disabling the feature
+        instance_variable_set("@#{property_name}", value)
+      end
+
+      def timeout_property(property_name, start_value)
+        singleton_class.instance_eval do
+          attr_reader property_name
+          define_method("#{property_name}=") { |v| set_timeout_property(property_name, v) }
+        end
+        set_timeout_property(property_name, start_value)
+      end
+    end
+
+    # all values are in seconds
+    timeout_property :wait_timeout,    30 # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
+    timeout_property :wait_overtime,   60 # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
+    timeout_property :service_timeout, 15 # How long the application can take to complete handling the request once it's passed down to it.
+
+    class << self
+      alias_method :timeout=, :service_timeout= # legacy compatibility setter
+      attr_accessor :service_past_wait    # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value.
+      @service_past_wait = false          # we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
     end
 
     def initialize(app)
       @app = app
     end
 
+    RT = self # shorthand reference
     def call(env)
-      return @app.call(env) if self.class.timeout.zero?
+      info      = (env[ENV_INFO_KEY] ||= RequestDetails.new)
+      info.id ||= env['HTTP_HEROKU_REQUEST_ID'] || env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
 
-      info          = env[ENV_INFO_KEY] ||= RequestDetails.new
-      info.id     ||= env['HTTP_HEROKU_REQUEST_ID'] || env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
-      request_start = env['HTTP_X_REQUEST_START'] # unix timestamp in ms
-      request_start = Time.at(request_start.to_f / 1000) if request_start
-      info.wait     = Time.now - request_start           if request_start
-      time_left     = MAX_REQUEST_AGE - info.wait        if info.wait
-      time_left    += self.class.overtime                if time_left && self.class._request_has_body?(env)
-      info.timeout  = [self.class.timeout, time_left].compact.select { |n| n >= 0 }.min
+      time_started_service = Time.now                      # The time the request started being processed by rack
+      time_started_wait    = RT._read_x_request_start(env) # The time the request was initially receibed by the web server (if available)
+      effective_overtime   = (RT.wait_overtime && RT._request_has_body?(env)) ? RT.wait_overtime : 0 # additional wait timeout (if set and applicable)
+      seconds_service_left = nil
 
-      if time_left && time_left <= 0
-        Rack::Timeout._set_state! env, :expired
-        raise RequestExpiryError, "Request older than #{MAX_REQUEST_AGE} seconds."
+      # if X-Request-Start is present and wait_timeout is set, expire requests older than wait_timeout (+wait_overtime when applicable)
+      if time_started_wait && RT.wait_timeout
+        seconds_waited          = time_started_service - time_started_wait # how long it took between the web server first receiving the request and rack being able to handle it
+        seconds_waited          = 0 if seconds_waited < 0                  # make up for potential time drift between the routing server and the application server
+        final_wait_timeout      = RT.wait_timeout + effective_overtime     # how long the request will be allowed to have waited
+        seconds_service_left    = final_wait_timeout - seconds_waited      # first calculation of service timeout (relevant if request doesn't get expired, may be overriden later)
+        info.wait, info.timeout = seconds_waited, final_wait_timeout       # updating the info properties; info.timeout will be the wait timeout at this point
+        if seconds_service_left <= 0 # expire requests that have waited for too long in the queue (as they are assumed to have been dropped by the web server / routing layer at this point)
+          RT._set_state! env, :expired
+          raise RequestExpiryError, "Request older than #{final_wait_timeout} seconds."
+        end
       end
 
-      Rack::Timeout._set_state! env, :ready
-      ready_time = Time.now
+      # pass request through if service_timeout is false (i.e., don't time it out at all.)
+      return @app.call(env) unless RT.service_timeout
 
+      # compute actual timeout to be used for this request; if service_past_wait is true, this is just service_timeout. If false (the default), and wait time was determined, we'll use the shortest value between seconds_service_left and service_timeout. See comment above at service_past_wait for justification.
+      info.timeout = RT.service_timeout # nice and simple, when service_past_wait is true, not so much otherwise:
+      info.timeout = seconds_service_left if !RT.service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < RT.service_timeout
+
+      RT._set_state! env, :ready
       begin
         app_thread     = Thread.current
         timeout_thread = Thread.start do
           loop do
-            info.service  = Time.now - ready_time
+            info.service  = Time.now - time_started_service
             sleep_seconds = [1 - (info.service % 1), info.timeout - info.service].min
             break if sleep_seconds <= 0
-            Rack::Timeout._set_state! env, :active
+            RT._set_state! env, :active
             sleep(sleep_seconds)
           end
-          Rack::Timeout._set_state! env, :timed_out
+          RT._set_state! env, :timed_out
           app_thread.raise(RequestTimeoutError, "Request ran for longer than #{info.timeout} seconds.")
         end
         response = @app.call(env)
@@ -60,18 +107,35 @@ module Rack
         timeout_thread.join
       end
 
-      info.service = Time.now - ready_time
-      Rack::Timeout._set_state! env, :completed
+      info.service = Time.now - time_started_service
+      RT._set_state! env, :completed
       response
     end
 
     # used internally
-    def self._set_state!(env, state)
-      raise "Invalid state: #{state.inspect}" unless VALID_STATES.include? state
-      env[ENV_INFO_KEY].state = state
-      notify_state_change_observers(env)
+
+    # X-Request-Start contains the time the request was first seen by the server. Format varies wildly amongst servers, yay!
+    #   - nginx gives the time since epoch as seconds.milliseconds[1]. New Relic documentation recommends preceding it with t=[2], so might as well detect it.
+    #   - Heroku gives the time since epoch in milliseconds. [3]
+    #   - Apache uses t=microseconds[4], so we're not even going there.
+    #
+    # The sane way to handle this would be by knowing the server being used, instead let's just hack around with regular expressions and ignore apache entirely.
+    # [1]: http://nginx.org/en/docs/http/ngx_http_log_module.html#var_msec
+    # [2]: https://docs.newrelic.com/docs/apm/other-features/request-queueing/request-queue-server-configuration-examples#nginx
+    # [3]: https://devcenter.heroku.com/articles/http-routing#heroku-headers
+    # [4]: http://httpd.apache.org/docs/current/mod/mod_headers.html#header
+    #
+    # This is a code extraction for readability, this method is only called from a single point.
+    RX_NGINX_X_REQUEST_START  = /^(?:t=)?(\d+)\.(\d{3})$/
+    RX_HEROKU_X_REQUEST_START = /^(\d+)$/
+    def self._read_x_request_start(env)
+      return unless s = env['HTTP_X_REQUEST_START']
+      return unless m = s.match(RX_HEROKU_X_REQUEST_START) || s.match(RX_NGINX_X_REQUEST_START)
+      Time.at(m[1,2].join.to_f / 1000)
     end
 
+    # This method determines if a body is present. requests with a body (generally POST, PUT) can have a lengthy body which may have taken a while to be received by the web server, inflating their computed wait time. This in turn could lead to unwanted expirations. See wait_overtime property as a way to overcome those.
+    # This is a code extraction for readability, this method is only called from a single point.
     def self._request_has_body?(env)
       return true  if env['HTTP_TRANSFER_ENCODING'] == 'chunked'
       return false if env['CONTENT_LENGTH'].nil?
@@ -79,6 +143,11 @@ module Rack
       true
     end
 
+    def self._set_state!(env, state)
+      raise "Invalid state: #{state.inspect}" unless VALID_STATES.include? state
+      env[ENV_INFO_KEY].state = state
+      notify_state_change_observers(env)
+    end
 
     ### state change notification-related methods
 
@@ -110,7 +179,7 @@ module Rack
 
     private
 
-    # Sends out the notifications. Called internally at the end of `set_state!`
+    # Sends out the notifications. Called internally at the end of `_set_state!`
     def self.notify_state_change_observers(env)
       @state_change_observers.values.each { |observer| observer.send(OBSERVER_CALLBACK_METHOD_NAME, env) }
     end
