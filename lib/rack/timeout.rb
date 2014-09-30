@@ -60,7 +60,7 @@ module Rack
     RT = self # shorthand reference
     def call(env)
       info      = (env[ENV_INFO_KEY] ||= RequestDetails.new)
-      info.id ||= env['HTTP_HEROKU_REQUEST_ID'] || env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
+      info.id ||= env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
 
       time_started_service = Time.now                      # The time the request started being processed by rack
       time_started_wait    = RT._read_x_request_start(env) # The time the request was initially receibed by the web server (if available)
