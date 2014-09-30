@@ -1,3 +1,5 @@
+README is not very out-of-date for this release. Lots of comments in source though. README updates coming before next release.
+
 Rack::Timeout
 =============
 
