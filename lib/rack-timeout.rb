@@ -8,4 +8,4 @@ if defined?(Rails) && [3,4].include?(Rails::VERSION::MAJOR)
   end
 end
 
-Rack::Timeout::StateChangeLogger.register!
+Rack::Timeout::StageChangeLoggingObserver.register!

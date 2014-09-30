@@ -1,73 +1,63 @@
 require 'logger'
 
-module Rack
-  class Timeout
+class Rack::Timeout
+  class StageChangeLoggingObserver
+    STATE_LOG_LEVEL = { :expired   => :error,
+                        :ready     => :info,
+                        :active    => :debug,
+                        :timed_out => :error,
+                        :completed => :info,
+                      }
 
-    # convenience method so the current logger can be accessed via Rack::Timeout.logger
-    def self.logger
-      @state_change_observers[:logger]
+    # creates a logger and registers for state change notifications in Rack::Timeout
+    def self.register!(logger = nil)
+      new.register!(logger)
     end
 
-    class StateChangeLogger < ::Logger
-      SIMPLE_FORMATTER = ->(severity, timestamp, progname, msg) { "#{msg} at=#{severity.downcase}\n" }
-      DEFAULT_LEVEL    = INFO
-      STATE_LOG_LEVEL  = { ready:     INFO,
-                           active:    DEBUG,
-                           completed: INFO,
-                           expired:   ERROR,
-                           timed_out: ERROR,
-                         }
-
-
-      # creates a logger and registers for state change notifications in Rack::Timeout
-      def self.register!(*a)
-        new(*a).register!
-      end
-
-      # registers for state change notifications in Rack::Timeout
-      def register!(target = ::Rack::Timeout)
-        target.register_state_change_observer(:logger, self)
-      end
-
-      def initialize(device = $stderr, *a)
-        super(device, *a)
-        self.formatter = SIMPLE_FORMATTER
-        self.level     = self.class.determine_level
-      end
-
-      # callback method from Rack::Timeout state change notifications
-      def rack_timeout_request_did_change_state_in(env)
-        log_state_change(env[ENV_INFO_KEY])
-      end
-
-
-      private
-
-      # log level is, by precedence, one of: $RACK_TIMEOUT_LOG_LEVEL > $LOG_LEVEL > INFO
-      def self.determine_level
-        env_log_level = ENV.values_at("RACK_TIMEOUT_LOG_LEVEL", "LOG_LEVEL").compact.map(&:upcase).first
-        env_log_level = const_get(env_log_level) if env_log_level && const_defined?(env_log_level)
-        env_log_level || DEFAULT_LEVEL
-      end
-
-      # helper method used for formatting in #log_state_change
-      def ms(s)
-        '%.fms' % (s * 1000)
-      end
-
-      # generates the actual log string
-      def log_state_change(info)
-        add(STATE_LOG_LEVEL[info.state]) do
-          s  = 'source=rack-timeout'
-          s << ' id='      << info.id          if info.id
-          s << ' wait='    << ms(info.wait)    if info.wait
-          s << ' timeout=' << ms(info.timeout) if info.timeout
-          s << ' service=' << ms(info.service) if info.service
-          s << ' state='   << info.state.to_s  if info.state
-          s
-        end
-      end
-
+    # registers for state change notifications in Rack::Timeout (or other explicit target (potentially useful for testing))
+    def register!(logger = nil, target = ::Rack::Timeout)
+      @logger = logger
+      target.register_state_change_observer(:logger, &method(:log_state_change))
     end
+
+    SIMPLE_FORMATTER = ->(severity, timestamp, progname, msg) { "#{msg} at=#{severity.downcase}\n" }
+    def self.mk_logger(device, level = ::Logger::INFO)
+      ::Logger.new(device).tap do |logger|
+        logger.level     = level
+        logger.formatter = SIMPLE_FORMATTER
+      end
+    end
+
+    class << self
+      attr_accessor :logger
+    end
+    def logger(env = nil)
+      self.class.logger ||
+        (defined?(::Rails) && Rails.logger) ||
+        (env && env['rack.logger'])         ||
+        (env && env['rack.errors'] && self.class.mk_logger(env['rack.errors'])) ||
+        (@fallback_logger ||= self.class.mk_logger($stderr))
+    end
+
+    # helper method used for formatting in #log_state_change
+    def ms(s)
+      '%.fms' % (s * 1000)
+    end
+
+    # generates the actual log string
+    def log_state_change(env)
+      info = env[ENV_INFO_KEY]
+      level = STATE_LOG_LEVEL[info.state]
+      logger(env).send(level) do
+        s  = 'source=rack-timeout'
+        s << ' id='      << info.id          if info.id
+        s << ' wait='    << ms(info.wait)    if info.wait
+        s << ' timeout=' << ms(info.timeout) if info.timeout
+        s << ' service=' << ms(info.service) if info.service
+        s << ' state='   << info.state.to_s  if info.state
+        s
+      end
+    end
+
   end
 end
