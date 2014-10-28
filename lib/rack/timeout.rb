@@ -26,10 +26,10 @@ module Rack
     # helper methods to setup getter/setters for timeout properties. Ensure they're always positive numbers or false. When set to false (or 0), their behaviour is disabled.
     class << self
       def set_timeout_property(property_name, value)
-        unless value == false || (value.is_a?(Numeric) && value >= 0)
+        unless value == false || (value.is_a?(Numeric) && value >= 0) || value.respond_to?(:call)
           raise ArgumentError, "value for #{property_name} should be false, zero, or a positive number."
         end
-        value = false if value.zero? # zero means we're disabling the feature
+        value = false if value == 0 # zero means we're disabling the feature
         instance_variable_set("@#{property_name}", value)
       end
 
@@ -64,14 +64,15 @@ module Rack
 
       time_started_service = Time.now                      # The time the request started being processed by rack
       time_started_wait    = RT._read_x_request_start(env) # The time the request was initially receibed by the web server (if available)
-      effective_overtime   = (RT.wait_overtime && RT._request_has_body?(env)) ? RT.wait_overtime : 0 # additional wait timeout (if set and applicable)
+      effective_overtime   = (RT.wait_overtime && RT._request_has_body?(env)) ? (RT.wait_overtime.respond_to?(:call) ? RT.wait_overtime.call(env) : RT.wait_overtime) : 0 # additional wait timeout (if set and applicable)
       seconds_service_left = nil
 
       # if X-Request-Start is present and wait_timeout is set, expire requests older than wait_timeout (+wait_overtime when applicable)
       if time_started_wait && RT.wait_timeout
         seconds_waited          = time_started_service - time_started_wait # how long it took between the web server first receiving the request and rack being able to handle it
         seconds_waited          = 0 if seconds_waited < 0                  # make up for potential time drift between the routing server and the application server
-        final_wait_timeout      = RT.wait_timeout + effective_overtime     # how long the request will be allowed to have waited
+        wait_timeout            = RT.wait_timeout.respond_to?(:call) ? RT.wait_timeout.call(env) : RT.wait_timeout
+        final_wait_timeout      = wait_timeout + effective_overtime        # how long the request will be allowed to have waited
         seconds_service_left    = final_wait_timeout - seconds_waited      # first calculation of service timeout (relevant if request doesn't get expired, may be overriden later)
         info.wait, info.timeout = seconds_waited, final_wait_timeout       # updating the info properties; info.timeout will be the wait timeout at this point
         if seconds_service_left <= 0 # expire requests that have waited for too long in the queue (as they are assumed to have been dropped by the web server / routing layer at this point)
@@ -84,7 +85,7 @@ module Rack
       return @app.call(env) unless RT.service_timeout
 
       # compute actual timeout to be used for this request; if service_past_wait is true, this is just service_timeout. If false (the default), and wait time was determined, we'll use the shortest value between seconds_service_left and service_timeout. See comment above at service_past_wait for justification.
-      info.timeout = RT.service_timeout # nice and simple, when service_past_wait is true, not so much otherwise:
+      info.timeout = RT.service_timeout.respond_to?(:call) ? RT.service_timeout.call(env) : RT.service_timeout # nice and simple, when service_past_wait is true, not so much otherwise:
       info.timeout = seconds_service_left if !RT.service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < RT.service_timeout
 
       RT._set_state! env, :ready

@@ -25,6 +25,10 @@ That's all that's required if you want to use the default timeout of 15s. To use
     # config/initializers/timeout.rb
     Rack::Timeout.timeout = 5  # seconds
 
+Or use a proc for a dynamic timeout:
+
+    Rack::Timeout.timeout = proc{|env| env["REQUEST_PATH"].start_with?("/admin") ? 15 : 5 }
+
 ### Sinatra and other Rack apps
 
     # config.ru
