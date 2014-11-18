@@ -29,7 +29,7 @@ module Rack
         unless value == false || (value.is_a?(Numeric) && value >= 0)
           raise ArgumentError, "value for #{property_name} should be false, zero, or a positive number."
         end
-        value = false if value.zero? # zero means we're disabling the feature
+        value = false if value && value.zero? # zero means we're disabling the feature
         instance_variable_set("@#{property_name}", value)
       end
 

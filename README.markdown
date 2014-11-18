@@ -56,7 +56,7 @@ On Heroku, a request will be dropped when the routing layer sees no data being t
 
 `Rack::Timeout.wait_timeout` is set at a default of 30 seconds, matching Heroku's router's timeout.
 
-Wait timeout can be disabled entirely by setting the property to `0` or `false`.
+Wait timeout can be disabled entirely by setting the property to `0`.
 
 A request's computed wait time may affect the service timeout used for it. Basically, a request's wait time plus service time may not exceed the wait timeout. The reasoning for that is based on Heroku router's behavior, that the request would be dropped anyway after the wait timeout. So, for example, with the default settings of `service_timeout=15`, `wait_timeout=30`, a request that had 20 seconds of wait time will not have a service timeout of 15, but instead of 10, as there are only 10 seconds left before `wait_timeout` is reached. This behavior can be disabled by setting `Rack::Timeout.service_past_wait` to `true`. When set, the `service_timeout` setting will always be honored.
 
@@ -221,5 +221,5 @@ For applications running Ruby 1.8.x and/or Rails 2.x, use [version 0.0.4][v0.0.4
 
 
 ---
-Copyright © 2010-2014 Caio Chassot, released under the MIT license  
+Copyright © 2010-2014 Caio Chassot, released under the MIT license
 <http://github.com/heroku/rack-timeout>
