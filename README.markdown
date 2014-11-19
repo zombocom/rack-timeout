@@ -187,9 +187,9 @@ Logging
 
 Rack::Timeout logs a line every time there's a change in state in a request's lifetime.
 
-Changes into `timed_out` and `expired` are logged at the `ERROR` level, most other things are logged as `INFO`. The `active` state is logged as `DEBUG`, every ~1s while the request is still active.
+Request state changes into `timed_out` and `expired` are logged at the `ERROR` level, most other things are logged as `INFO`. The `active` state is logged as `DEBUG`, every ~1s while the request is still active.
 
-Rack::Timeout will try to use Rails.logger if present, otherwise it'll look for a logger in `env['rack.logger']`, and if neither are present, it'll create its own logger, either writing to `env['rack.errors']`, or to `$stderr` if the former is not set.
+Rack::Timeout will try to use `Rails.logger` if present, otherwise it'll look for a logger in `env['rack.logger']`, and if neither are present, it'll create its own logger, either writing to `env['rack.errors']`, or to `$stderr` if the former is not set.
 
 A custom logger can be set via `Rack::Timeout::StageChangeLoggingObserver.logger`. This takes priority over the automatic logger detection:
 
