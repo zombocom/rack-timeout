@@ -3,7 +3,7 @@ require 'securerandom'
 
 module Rack
   class Timeout
-    class Error < RuntimeError;        end # superclass for the following…
+    class Error < Exception;           end # superclass for the following…
     class RequestExpiryError  < Error; end # raised when a request is dropped without being given a chance to run (because too old)
     class RequestTimeoutError < Error; end # raised when a request has run for too long
 
