@@ -1,0 +1,36 @@
+0.2.0
+=====
+- Added CHANGELOG
+- Rack::Timeout::Error now inherits from Exception instead of StandardError, with the hope users won't rescue from it accidentally
+
+0.1.2
+=====
+- improve RequestTimeoutError error string so @watsonian is happy
+
+0.1.1
+=====
+- README updates
+- fix that setting properties to false resulted in an error
+
+0.1.0
+=====
+- Rewrote README
+
+0.1.0beta4
+==========
+- Renamed `timeout` setting to `service_timeout`; `timeout=` still works for backwards compatibility
+– `MAX_REQUEST_AGE` is gone, the `wait_timeout` setting more or less replaces it
+- Renamed `overtime` setting to `wait_overtime`
+- overtime setting should actually work (It had never made it to beta3)
+- In the request info struct, renamed `age` to `wait`, `duration` to `service`
+- Rack::Timeout::StageChangeLogger is gone, replaced by Rack::Timeout::StageChangeLoggingObserver, which is an observer class that composites with a logger, instead of inheriting from Logger. Anything logging related will likely be incompatible with previous beta release.
+- Log level can no longer be set with env vars, has to be set in the logger being used. (Which can now be custom / user-provided.)
+
+0.1.0beta1,2,3
+==============
+- Dropped ruby 1.8.x support
+- Dropped rails 2 support
+- Added rails 4 support
+- Added much logging
+– Added support for dropping requests that waited too long in the queue without ever handling them
+- Other things I can't remember, see git logs :P
