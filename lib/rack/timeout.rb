@@ -13,7 +13,11 @@ module Rack
       :service,   # time rack spent processing the request (updated ~ every second)
       :timeout,   # the actual computed timeout to be used for this request
       :state,     # the request's current state, see below:
-      )
+    ) {
+      def ms(k)   # helper method used for formatting values in milliseconds
+        '%.fms' % (self[k] * 1000) if self[k]
+      end
+    }
     VALID_STATES = [
       :expired,   # The request was too old by the time it reached rack (see wait_timeout, wait_overtime)
       :ready,     # We're about to start processing this request
@@ -99,7 +103,7 @@ module Rack
             sleep(sleep_seconds)
           end
           RT._set_state! env, :timed_out
-          app_thread.raise(RequestTimeoutError, "Request ran for longer than #{info.timeout} seconds.")
+          app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)} seconds, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
         end
         response = @app.call(env)
       ensure

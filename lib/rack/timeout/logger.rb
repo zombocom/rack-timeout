@@ -39,22 +39,17 @@ class Rack::Timeout
         (@fallback_logger ||= self.class.mk_logger($stderr))
     end
 
-    # helper method used for formatting in #log_state_change
-    def ms(s)
-      '%.fms' % (s * 1000)
-    end
-
     # generates the actual log string
     def log_state_change(env)
       info = env[ENV_INFO_KEY]
       level = STATE_LOG_LEVEL[info.state]
       logger(env).send(level) do
         s  = 'source=rack-timeout'
-        s << ' id='      << info.id          if info.id
-        s << ' wait='    << ms(info.wait)    if info.wait
-        s << ' timeout=' << ms(info.timeout) if info.timeout
-        s << ' service=' << ms(info.service) if info.service
-        s << ' state='   << info.state.to_s  if info.state
+        s << ' id='      << info.id           if info.id
+        s << ' wait='    << info.ms(:wait)    if info.wait
+        s << ' timeout=' << info.ms(:timeout) if info.timeout
+        s << ' service=' << info.ms(:service) if info.service
+        s << ' state='   << info.state.to_s   if info.state
         s
       end
     end
