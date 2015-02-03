@@ -17,20 +17,26 @@ The following covers currently supported versions of Rails, Rack, Ruby, and Bund
 
 ### Rails apps
 
-    # Gemfile
-    gem "rack-timeout"
+```ruby
+# Gemfile
+gem "rack-timeout"
+```
 
 That's all that's required if you want to use the default timeout of 15s. To use a custom timeout, create an initializer file:
 
-    # config/initializers/timeout.rb
-    Rack::Timeout.timeout = 5  # seconds
+```ruby
+# config/initializers/timeout.rb
+Rack::Timeout.timeout = 5  # seconds
+```
 
 ### Sinatra and other Rack apps
 
-    # config.ru
-    require "rack-timeout"
-    use Rack::Timeout          # Call as early as possible so rack-timeout runs before all other middleware.
-    Rack::Timeout.timeout = 5  # Recommended. If omitted, defaults to 15 seconds.
+```ruby
+# config.ru
+require "rack-timeout"
+use Rack::Timeout          # Call as early as possible so rack-timeout runs before all other middleware.
+Rack::Timeout.timeout = 5  # Recommended. If omitted, defaults to 15 seconds.
+```
 
 
 The Rabbit Hole
@@ -168,13 +174,17 @@ Observers are blocks that are notified about state changes during a request's li
 
 You can register an observer with:
 
-    Rack::Timeout.register_state_change_observer(:a_unique_name) { |env| do_things env }
+```ruby
+Rack::Timeout.register_state_change_observer(:a_unique_name) { |env| do_things env }
+```
 
 There's currently no way to subscribe to changes into or out of a particular state. To check the actual state we're moving into, read `env['rack-timeout.info'].state`. Handling going out of a state would require some additional logic in the observer.
 
 You can remove an observer with `unregister_state_change_observer`:
 
-    Rack::Timeout.unregister_state_change_observer(:a_unique_name)
+```ruby
+Rack::Timeout.unregister_state_change_observer(:a_unique_name)
+```
 
 
 rack-timeout's logging is implemented using an observer; see `Rack::Timeout::StageChangeLoggingObserver` in logger.rb for the implementation.
@@ -193,21 +203,27 @@ Rack::Timeout will try to use `Rails.logger` if present, otherwise it'll look fo
 
 A custom logger can be set via `Rack::Timeout::StageChangeLoggingObserver.logger`. This takes priority over the automatic logger detection:
 
-    Rack::Timeout::StageChangeLoggingObserver.logger = Logger.new
+```ruby
+Rack::Timeout::StageChangeLoggingObserver.logger = Logger.new
+```
 
 When creating its own logger, rack-timeout will use a log level of `INFO`. Otherwise whatever log level is already set on the logger being used continues in effect.
 
 Logging is enabled by default if Rack::Timeout is loaded via the `rack-timeout` file (recommended), but can be removed by unregistering its observer:
 
-    Rack::Timeout.unregister_state_change_observer(:logger)
+```ruby
+Rack::Timeout.unregister_state_change_observer(:logger)
+```
 
 Each log line is a set of `key=value` pairs, containing the entries from the `env["rack-timeout.info"]` struct that are not `nil`. See the Request Lifetime section above for a description of each field. Note that while the values for `wait`, `timeout`, and `service` are stored internally as seconds, they are logged as milliseconds for readability.
 
 A sample log excerpt might look like:
 
-    source=rack-timeout id=13793c wait=369ms timeout=10000ms state=ready at=info
-    source=rack-timeout id=13793c wait=369ms timeout=10000ms service=15ms state=completed at=info
-    source=rack-timeout id=ea7bd3 wait=371ms timeout=10000ms state=timed_out at=error
+```
+source=rack-timeout id=13793c wait=369ms timeout=10000ms state=ready at=info
+source=rack-timeout id=13793c wait=369ms timeout=10000ms service=15ms state=completed at=info
+source=rack-timeout id=ea7bd3 wait=371ms timeout=10000ms state=timed_out at=error
+```
 
 
 Compatibility
