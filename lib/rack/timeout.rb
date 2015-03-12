@@ -80,7 +80,7 @@ module Rack
         info.wait, info.timeout = seconds_waited, final_wait_timeout       # updating the info properties; info.timeout will be the wait timeout at this point
         if seconds_service_left <= 0 # expire requests that have waited for too long in the queue (as they are assumed to have been dropped by the web server / routing layer at this point)
           RT._set_state! env, :expired
-          raise RequestExpiryError, "Request older than #{final_wait_timeout} seconds."
+          raise RequestExpiryError, "Request older than #{info.ms(:timeout)}."
         end
       end
 
