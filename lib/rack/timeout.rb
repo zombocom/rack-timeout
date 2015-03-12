@@ -103,7 +103,7 @@ module Rack
             sleep(sleep_seconds)
           end
           RT._set_state! env, :timed_out
-          app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)} seconds, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
+          app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
         end
         response = @app.call(env)
       ensure
