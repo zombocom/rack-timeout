@@ -1,4 +1,4 @@
-0.2.2
+0.2.3
 =====
 - Ignore Rack::NullLogger when picking a logger
 
