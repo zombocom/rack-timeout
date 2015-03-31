@@ -34,7 +34,7 @@ class Rack::Timeout
     def logger(env = nil)
       self.class.logger ||
         (defined?(::Rails) && Rails.logger) ||
-        (env && env['rack.logger'] && !env['rack.logger'].is_a?(::Rack::NullLogger)) ||
+        (env && !env['rack.logger'].is_a?(::Rack::NullLogger) && env['rack.logger']) ||
         (env && env['rack.errors'] && self.class.mk_logger(env['rack.errors']))      ||
         (@fallback_logger ||= self.class.mk_logger($stderr))
     end
