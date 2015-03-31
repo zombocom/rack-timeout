@@ -5,7 +5,7 @@ Gem::Specification.new do |spec|
   spec.version     = '0.2.4'
   spec.homepage    = 'http://github.com/heroku/rack-timeout'
   spec.author      = 'Caio Chassot'
-  spec.email       = 'dev@caiochassot.com'
+  spec.email       = 'caio@heroku.com'
   spec.files       = Dir[*%w( MIT-LICENSE README.markdown lib/**/* )]
   spec.license     = 'MIT'
 end
