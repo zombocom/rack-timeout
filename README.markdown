@@ -104,7 +104,7 @@ More detailed explanations of the issues surrounding timing out in ruby during I
 
 ### Timing Out Inherently Unsafe
 
-Raising mid-flight in stateful applications is inherently unsafe. A request can be aborted at any moment in the code flow, and the application cam be left in an inconsistent state. There's little way rack-timeout could be aware of ongoing state changes. Applications that rely on a set of globals (like class variables) or any other state that lives beyond a single request may find those left in an unexpected/inconsistent state after an aborted request. Some cleanup code might not have run, or only half of a set of related changes may have been applied.
+Raising mid-flight in stateful applications is inherently unsafe. A request can be aborted at any moment in the code flow, and the application can be left in an inconsistent state. There's little way rack-timeout could be aware of ongoing state changes. Applications that rely on a set of globals (like class variables) or any other state that lives beyond a single request may find those left in an unexpected/inconsistent state after an aborted request. Some cleanup code might not have run, or only half of a set of related changes may have been applied.
 
 A lot more can go wrong. An intricate explanation of the issue by JRuby's Charles Nutter can be found [here][broken-timeout].
 

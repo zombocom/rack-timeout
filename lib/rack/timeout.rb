@@ -67,7 +67,7 @@ module Rack
       info.id ||= env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
 
       time_started_service = Time.now                      # The time the request started being processed by rack
-      time_started_wait    = RT._read_x_request_start(env) # The time the request was initially receibed by the web server (if available)
+      time_started_wait    = RT._read_x_request_start(env) # The time the request was initially received by the web server (if available)
       effective_overtime   = (RT.wait_overtime && RT._request_has_body?(env)) ? RT.wait_overtime : 0 # additional wait timeout (if set and applicable)
       seconds_service_left = nil
 
