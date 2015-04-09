@@ -92,28 +92,28 @@ module Rack
       info.timeout = seconds_service_left if !RT.service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < RT.service_timeout
 
       RT._set_state! env, :ready
-      begin
-        app_thread     = Thread.current
-        timeout_thread = Thread.start do
-          loop do
-            info.service  = Time.now - time_started_service
-            sleep_seconds = [1 - (info.service % 1), info.timeout - info.service].min
-            break if sleep_seconds <= 0
-            RT._set_state! env, :active
-            sleep(sleep_seconds)
-          end
-          RT._set_state! env, :timed_out
-          app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
+      app_thread     = Thread.current
+      timeout_thread = Thread.start do
+        loop do
+          Thread.exit if env[ENV_INFO_KEY].state == :completed
+          info.service  = Time.now - time_started_service
+          sleep_seconds = [1 - (info.service % 1), info.timeout - info.service].min
+          break if sleep_seconds <= 0
+          RT._set_state! env, :active
+          sleep(sleep_seconds)
         end
-        response = @app.call(env)
-      ensure
-        timeout_thread.kill
-        timeout_thread.join
+        RT._set_state! env, :timed_out
+        app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
       end
 
-      info.service = Time.now - time_started_service
-      RT._set_state! env, :completed
-      response
+      begin
+        @app.call(env)
+      ensure
+        if env[ENV_INFO_KEY].state == :active
+          info.service = Time.now - time_started_service
+          RT._set_state! env, :completed
+        end
+      end
     end
 
     ### following methods are used internally (called by instances, so can't be private. _ marker should discourage people from calling them)
