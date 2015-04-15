@@ -150,7 +150,7 @@ The value of that entry is an instance of `Rack::Timeout::RequestDetails`, which
 Errors
 ------
 
-Rack::Timeout can raise two types of exceptions. Both descend from `Rack::Timeout::Error`, which itself descends from `RuntimeError`. They are:
+Rack::Timeout can raise two types of exceptions. Both descend from `Rack::Timeout::Error`, which itself descends from `Exception`, and is thus not implicitly rescued from. They are:
 
 *   `Rack::Timeout::RequestTimeoutError`: this is raised when a request has run for longer than the specified timeout. It's raised by the rack-timeout timer thread in the application thread, at the point in the stack the app happens to be in when the timeout is triggered. This exception can generally be caught within the application, but in doing so you're working past the timeout. This is ok for quick cleanup work but shouldn't be abused as Rack::Timeout will not kick in twice for the same request.
 
