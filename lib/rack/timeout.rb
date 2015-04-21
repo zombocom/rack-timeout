@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'securerandom'
+require 'monitor'
 
 module Rack
   class Timeout
@@ -14,6 +15,8 @@ module Rack
       :timeout,   # the actual computed timeout to be used for this request
       :state,     # the request's current state, see below:
     ) {
+      include MonitorMixin
+
       def ms(k)   # helper method used for formatting values in milliseconds
         '%.fms' % (self[k] * 1000) if self[k]
       end
@@ -92,28 +95,33 @@ module Rack
       info.timeout = seconds_service_left if !RT.service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < RT.service_timeout
 
       RT._set_state! env, :ready
-      begin
-        app_thread     = Thread.current
-        timeout_thread = Thread.start do
-          loop do
+      app_thread     = Thread.current
+      timeout_thread = Thread.start do
+        sleep_seconds = nil
+        loop do
+          RT._get_state env do |state|
+            Thread.exit if state == :completed
             info.service  = Time.now - time_started_service
             sleep_seconds = [1 - (info.service % 1), info.timeout - info.service].min
-            break if sleep_seconds <= 0
             RT._set_state! env, :active
-            sleep(sleep_seconds)
           end
-          RT._set_state! env, :timed_out
-          app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
+          break if sleep_seconds <= 0
+          sleep(sleep_seconds)
         end
-        response = @app.call(env)
-      ensure
-        timeout_thread.kill
-        timeout_thread.join
+        RT._set_state! env, :timed_out
+        app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
       end
 
-      info.service = Time.now - time_started_service
-      RT._set_state! env, :completed
-      response
+      begin
+        @app.call(env)
+      ensure
+        RT._get_state env do |state|
+          if state == :active
+            info.service = Time.now - time_started_service
+            RT._set_state! env, :completed
+          end
+        end
+      end
     end
 
     ### following methods are used internally (called by instances, so can't be private. _ marker should discourage people from calling them)
@@ -149,8 +157,16 @@ module Rack
 
     def self._set_state!(env, state)
       raise "Invalid state: #{state.inspect}" unless VALID_STATES.include? state
-      env[ENV_INFO_KEY].state = state
-      notify_state_change_observers(env)
+      env[ENV_INFO_KEY].synchronize do
+        env[ENV_INFO_KEY].state = state
+        notify_state_change_observers(env)
+      end
+    end
+
+    def self._get_state(env)
+      env[ENV_INFO_KEY].synchronize do
+        yield env[ENV_INFO_KEY].state
+      end
     end
 
     ### state change notification-related methods
