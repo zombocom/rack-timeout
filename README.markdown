@@ -214,7 +214,7 @@ Rack::Timeout.unregister_state_change_observer(:a_unique_name)
 ```
 
 
-rack-timeout's logging is implemented using an observer; see `Rack::Timeout::StageChangeLoggingObserver` in logger.rb for the implementation.
+rack-timeout's logging is implemented using an observer; see `Rack::Timeout::StateChangeLoggingObserver` in logger.rb for the implementation.
 
 Custom observers might be used to do cleanup, store statistics on request length, timeouts, etc., and potentially do performance tuning on the fly.
 
@@ -228,10 +228,10 @@ Request state changes into `timed_out` and `expired` are logged at the `ERROR` l
 
 Rack::Timeout will try to use `Rails.logger` if present, otherwise it'll look for a logger in `env['rack.logger']`, and if neither are present, it'll create its own logger, either writing to `env['rack.errors']`, or to `$stderr` if the former is not set.
 
-A custom logger can be set via `Rack::Timeout::StageChangeLoggingObserver.logger`. This takes priority over the automatic logger detection:
+A custom logger can be set via `Rack::Timeout::StateChangeLoggingObserver.logger`. This takes priority over the automatic logger detection:
 
 ```ruby
-Rack::Timeout::StageChangeLoggingObserver.logger = Logger.new
+Rack::Timeout::StateChangeLoggingObserver.logger = Logger.new
 ```
 
 When creating its own logger, rack-timeout will use a log level of `INFO`. Otherwise whatever log level is already set on the logger being used continues in effect.

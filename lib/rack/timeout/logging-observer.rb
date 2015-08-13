@@ -2,7 +2,7 @@ require "logger"
 require_relative "core"
 
 class Rack::Timeout
-  class StageChangeLoggingObserver
+  class StateChangeLoggingObserver
     STATE_LOG_LEVEL = { :expired   => :error,
                         :ready     => :info,
                         :active    => :debug,
