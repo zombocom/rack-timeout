@@ -1,4 +1,5 @@
 require 'logger'
+require_relative "core"
 
 class Rack::Timeout
   class StageChangeLoggingObserver
