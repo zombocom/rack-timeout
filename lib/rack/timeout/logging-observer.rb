@@ -9,15 +9,9 @@ class Rack::Timeout::StateChangeLoggingObserver
                       :completed => :info,
                     }
 
-  # creates a logger and registers for state change notifications in Rack::Timeout
-  def self.register!(logger = nil)
-    new.register!(logger)
-  end
-
-  # registers for state change notifications in Rack::Timeout (or other explicit target (potentially useful for testing))
-  def register!(logger = nil, target = ::Rack::Timeout)
-    @logger = logger
-    target.register_state_change_observer(:logger, &method(:log_state_change))
+  # returns the Proc to be used as the observer callback block
+  def callback
+    method(:log_state_change)
   end
 
   SIMPLE_FORMATTER = ->(severity, timestamp, progname, msg) { "#{msg} at=#{severity.downcase}\n" }
@@ -28,12 +22,14 @@ class Rack::Timeout::StateChangeLoggingObserver
     end
   end
 
-  class << self
-    attr_accessor :logger
-  end
+
+  attr_writer :logger
+
+  private
+
   def logger(env = nil)
-    self.class.logger ||
-      (defined?(::Rails) && Rails.logger) ||
+    @logger ||
+      (defined?(::Rails) && ::Rails.logger) ||
       (env && !env["rack.logger"].is_a?(::Rack::NullLogger) && env["rack.logger"]) ||
       (env && env["rack.errors"] && self.class.mk_logger(env["rack.errors"]))      ||
       (@fallback_logger ||= self.class.mk_logger($stderr))

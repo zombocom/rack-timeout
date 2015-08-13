@@ -1,4 +1,4 @@
 require_relative "core"
-require_relative "logging-observer"
+require_relative "logger"
 
-Rack::Timeout::StateChangeLoggingObserver.register!
+Rack::Timeout::Logger.init
