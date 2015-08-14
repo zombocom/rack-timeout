@@ -22,7 +22,9 @@ The following covers currently supported versions of Rails, Rack, Ruby, and Bund
 gem "rack-timeout"
 ```
 
-That'll load rack-timeout and set it up as a Rails middleware using the default timeout of 15s. To use a custom timeout, create an initializer file:
+That'll load rack-timeout and set it up as a Rails middleware using the default timeout of 15s. The middleware is not inserted for the test environment.
+
+To use a custom timeout, create an initializer file:
 
 ```ruby
 # config/initializers/timeout.rb
