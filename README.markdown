@@ -214,7 +214,7 @@ Rack::Timeout.unregister_state_change_observer(:a_unique_name)
 ```
 
 
-rack-timeout's logging is implemented using an observer; see `Rack::Timeout::StageChangeLoggingObserver` in logger.rb for the implementation.
+rack-timeout's logging is implemented using an observer; see `Rack::Timeout::StateChangeLoggingObserver` in logging-observer.rb for the implementation.
 
 Custom observers might be used to do cleanup, store statistics on request length, timeouts, etc., and potentially do performance tuning on the fly.
 
@@ -228,18 +228,27 @@ Request state changes into `timed_out` and `expired` are logged at the `ERROR` l
 
 Rack::Timeout will try to use `Rails.logger` if present, otherwise it'll look for a logger in `env['rack.logger']`, and if neither are present, it'll create its own logger, either writing to `env['rack.errors']`, or to `$stderr` if the former is not set.
 
-A custom logger can be set via `Rack::Timeout::StageChangeLoggingObserver.logger`. This takes priority over the automatic logger detection:
-
-```ruby
-Rack::Timeout::StageChangeLoggingObserver.logger = Logger.new
-```
-
 When creating its own logger, rack-timeout will use a log level of `INFO`. Otherwise whatever log level is already set on the logger being used continues in effect.
 
-Logging is enabled by default if Rack::Timeout is loaded via the `rack-timeout` file (recommended), but can be removed by unregistering its observer:
+A custom logger can be set via `Rack::Timeout::Logger.logger`. This takes priority over the automatic logger detection:
 
 ```ruby
-Rack::Timeout.unregister_state_change_observer(:logger)
+Rack::Timeout::Logger.logger = Logger.new
+```
+
+There are helper setters that replace the logger:
+
+```ruby
+Rack::Timeout::Logger.device = $stderr
+Rack::Timeout::Logger.level  = Logger::INFO
+```
+
+Although each call replaces the logger, these can be use together and the final logger will retain both properties. (If only one is called, the defaults used above apply.)
+
+Logging is enabled by default, but can be removed with:
+
+```ruby
+Rack::Timeout::Logger.disable
 ```
 
 Each log line is a set of `key=value` pairs, containing the entries from the `env["rack-timeout.info"]` struct that are not `nil`. See the Request Lifetime section above for a description of each field. Note that while the values for `wait`, `timeout`, and `service` are stored internally as seconds, they are logged as milliseconds for readability.
