@@ -1,4 +1,5 @@
-require 'logger'
+require "logger"
+require_relative "core"
 
 class Rack::Timeout
   class StageChangeLoggingObserver
@@ -34,8 +35,8 @@ class Rack::Timeout
     def logger(env = nil)
       self.class.logger ||
         (defined?(::Rails) && Rails.logger) ||
-        (env && !env['rack.logger'].is_a?(::Rack::NullLogger) && env['rack.logger']) ||
-        (env && env['rack.errors'] && self.class.mk_logger(env['rack.errors']))      ||
+        (env && !env["rack.logger"].is_a?(::Rack::NullLogger) && env["rack.logger"]) ||
+        (env && env["rack.errors"] && self.class.mk_logger(env["rack.errors"]))      ||
         (@fallback_logger ||= self.class.mk_logger($stderr))
     end
 
@@ -44,12 +45,12 @@ class Rack::Timeout
       info = env[ENV_INFO_KEY]
       level = STATE_LOG_LEVEL[info.state]
       logger(env).send(level) do
-        s  = 'source=rack-timeout'
-        s << ' id='      << info.id           if info.id
-        s << ' wait='    << info.ms(:wait)    if info.wait
-        s << ' timeout=' << info.ms(:timeout) if info.timeout
-        s << ' service=' << info.ms(:service) if info.service
-        s << ' state='   << info.state.to_s   if info.state
+        s  = "source=rack-timeout"
+        s << " id="      << info.id           if info.id
+        s << " wait="    << info.ms(:wait)    if info.wait
+        s << " timeout=" << info.ms(:timeout) if info.timeout
+        s << " service=" << info.ms(:service) if info.service
+        s << " state="   << info.state.to_s   if info.state
         s
       end
     end

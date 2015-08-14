@@ -1,5 +1,5 @@
 # encoding: utf-8
-require 'securerandom'
+require "securerandom"
 
 module Rack
   class Timeout
@@ -15,7 +15,7 @@ module Rack
       :state,     # the request's current state, see below:
     ) {
       def ms(k)   # helper method used for formatting values in milliseconds
-        '%.fms' % (self[k] * 1000) if self[k]
+        "%.fms" % (self[k] * 1000) if self[k]
       end
     }
     VALID_STATES = [
@@ -25,7 +25,7 @@ module Rack
       :timed_out, # This request has run for too long and we're raising a timeout error in it
       :completed, # We're done with this request (also set after having timed out a request)
       ]
-    ENV_INFO_KEY = 'rack-timeout.info' # key under which each request's RequestDetails instance is stored in its env.
+    ENV_INFO_KEY = "rack-timeout.info" # key under which each request's RequestDetails instance is stored in its env.
 
     # helper methods to setup getter/setters for timeout properties. Ensure they're always positive numbers or false. When set to false (or 0), their behaviour is disabled.
     class << self
@@ -64,7 +64,7 @@ module Rack
     RT = self # shorthand reference
     def call(env)
       info      = (env[ENV_INFO_KEY] ||= RequestDetails.new)
-      info.id ||= env['HTTP_X_REQUEST_ID'] || SecureRandom.hex
+      info.id ||= env["HTTP_X_REQUEST_ID"] || SecureRandom.hex
 
       time_started_service = Time.now                      # The time the request started being processed by rack
       time_started_wait    = RT._read_x_request_start(env) # The time the request was initially received by the web server (if available)
@@ -133,7 +133,7 @@ module Rack
     RX_NGINX_X_REQUEST_START  = /^(?:t=)?(\d+)\.(\d{3})$/
     RX_HEROKU_X_REQUEST_START = /^(\d+)$/
     def self._read_x_request_start(env)
-      return unless s = env['HTTP_X_REQUEST_START']
+      return unless s = env["HTTP_X_REQUEST_START"]
       return unless m = s.match(RX_HEROKU_X_REQUEST_START) || s.match(RX_NGINX_X_REQUEST_START)
       Time.at(m[1,2].join.to_f / 1000)
     end
@@ -141,9 +141,9 @@ module Rack
     # This method determines if a body is present. requests with a body (generally POST, PUT) can have a lengthy body which may have taken a while to be received by the web server, inflating their computed wait time. This in turn could lead to unwanted expirations. See wait_overtime property as a way to overcome those.
     # This is a code extraction for readability, this method is only called from a single point.
     def self._request_has_body?(env)
-      return true  if env['HTTP_TRANSFER_ENCODING'] == 'chunked'
-      return false if env['CONTENT_LENGTH'].nil?
-      return false if env['CONTENT_LENGTH'].to_i.zero?
+      return true  if env["HTTP_TRANSFER_ENCODING"] == "chunked"
+      return false if env["CONTENT_LENGTH"].nil?
+      return false if env["CONTENT_LENGTH"].to_i.zero?
       true
     end
 
