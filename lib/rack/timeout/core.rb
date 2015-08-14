@@ -1,5 +1,7 @@
 # encoding: utf-8
 require "securerandom"
+require_relative "support/scheduler"
+require_relative "support/timeout"
 
 module Rack
   class Timeout
@@ -73,6 +75,7 @@ module Rack
       @app = app
     end
 
+
     RT = self # shorthand reference
     def call(env)
       info      = (env[ENV_INFO_KEY] ||= RequestDetails.new)
@@ -104,32 +107,28 @@ module Rack
       info.timeout = seconds_service_left if !RT.service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < RT.service_timeout
 
       RT._set_state! env, :ready
-      begin
-        app_thread     = Thread.current
-        timeout_thread = Thread.start do
-          loop do
-            info.service  = Time.now - time_started_service
-            sleep_seconds = [1 - (info.service % 1), info.timeout - info.service].min
-            break if sleep_seconds <= 0
-            RT._set_state! env, :active
-            sleep(sleep_seconds)
-          end
-          RT._set_state! env, :timed_out
-          app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
-        end
 
-        response = @app.call(env)
+      heartbeat_event = nil
+      update_service = ->(status = :active) {
+        heartbeat_event.cancel! if status != :active
+        info.service = Time.now - time_started_service
+        RT._set_state! env, status
+      }
+      heartbeat_event = RT::Scheduler.run_every(1) { update_service.call :active }
 
-      rescue RequestTimeoutException => e
-        raise RequestTimeoutError.new(env), e.message, e.backtrace
-
-      ensure
-        timeout_thread.kill
-        timeout_thread.join
+      timeout = RT::Scheduler::Timeout.new do |app_thread|
+        update_service.call :timed_out
+        app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
       end
 
-      info.service = Time.now - time_started_service
-      RT._set_state! env, :completed
+      response = timeout.timeout(info.timeout) do
+        begin  @app.call(env)
+        rescue RequestTimeoutException => e
+          raise RequestTimeoutError.new(env), e.message, e.backtrace
+        end
+      end
+
+      update_service.call :completed
       response
     end
 
