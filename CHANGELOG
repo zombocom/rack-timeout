@@ -1,3 +1,7 @@
+0.3.0-beta.2
+============
+- use a single scheduler thread to manage timeouts, instead of one timeout thread per request
+
 0.3.0-beta.1
 ============
 - instead of inserting middleware at position 0 for rails, insert before Rack::Runtime (which is right after Rack::Lock and the static file stuff)
