@@ -22,11 +22,30 @@ The following covers currently supported versions of Rails, Rack, Ruby, and Bund
 gem "rack-timeout"
 ```
 
-That's all that's required if you want to use the default timeout of 15s. To use a custom timeout, create an initializer file:
+That'll load rack-timeout and set it up as a Rails middleware using the default timeout of 15s. To use a custom timeout, create an initializer file:
 
 ```ruby
 # config/initializers/timeout.rb
 Rack::Timeout.timeout = 5  # seconds
+```
+
+### Rails apps, manually
+
+You'll need to do this if you removed `Rack::Runtime` from the middleware stack, or if you want to determine yourself where in the stack `Rack::Timeout` gets inserted.
+
+```ruby
+# Gemfile
+gem "rack-timeout", require:"rack/timeout/base"
+```
+
+```ruby
+# config/initializers/timeout.rb
+
+#  insert middleware wherever you want in the stack
+Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout
+
+# customize seconds before timeout
+Rack::Timeout.timeout = 5
 ```
 
 ### Sinatra and other Rack apps
@@ -237,5 +256,5 @@ For applications running Ruby 1.8.x and/or Rails 2.x, use [version 0.0.4][v0.0.4
 
 
 ---
-Copyright © 2010-2014 Caio Chassot, released under the MIT license  
+Copyright © 2010-2015 Caio Chassot, released under the MIT license  
 <http://github.com/heroku/rack-timeout>

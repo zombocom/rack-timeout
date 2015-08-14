@@ -1,3 +1,9 @@
+master (eventual 0.3.0-beta)
+============================
+- instead of inserting middleware at position 0 for rails, insert before Rack::Runtime (which is right after Rack::Lock and the static file stuff.)
+- file layout reorganization (see 6e82c276 for details)
+- CHANGELOG file is now in the gem (@dbackeus)
+
 0.2.4
 =====
 - Previous fix was borked.
