@@ -1,5 +1,5 @@
-master (eventual 0.3.0-beta)
-============================
+0.3.0-beta.1
+============
 - instead of inserting middleware at position 0 for rails, insert before Rack::Runtime (which is right after Rack::Lock and the static file stuff)
 - reshuffle error types: RequestExpiryError is again a RuntimeError, and timeouts raise a RequestTimeoutException, an Exception, and not descending from Rack::Timeout::Error (see README for more)
 - don't insert middleware for rails in test environment
