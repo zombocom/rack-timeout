@@ -3,9 +3,10 @@ require "securerandom"
 
 module Rack
   class Timeout
-    class Error < Exception;           end # superclass for the following…
+    class Error < RuntimeError;        end # superclass for the following…
     class RequestExpiryError  < Error; end # raised when a request is dropped without being given a chance to run (because too old)
     class RequestTimeoutError < Error; end # raised when a request has run for too long
+    class RequestTimeoutException < Exception; end # This is first raised to help prevent an application from inadvertently catching the above. It's then caught by rack-timeout and replaced with RequestTimeoutError to bubble up to wrapping middlewares and the web server
 
     RequestDetails = Struct.new(
       :id,        # a unique identifier for the request. informative-only.
@@ -103,9 +104,14 @@ module Rack
             sleep(sleep_seconds)
           end
           RT._set_state! env, :timed_out
-          app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
+          app_thread.raise(RequestTimeoutException, "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
         end
+
         response = @app.call(env)
+
+      rescue RequestTimeoutException => e
+        raise RequestTimeoutError, e.message, e.backtrace
+
       ensure
         timeout_thread.kill
         timeout_thread.join
