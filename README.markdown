@@ -7,7 +7,7 @@ A generous timeout of 15s is the default. It's recommended to set the timeout as
 
 There's a handful of other settings, read on for details.
 
-Rack::Timeout is not a solution to the problem of long-running requests, it's a debug and remediation tool. App developers should track rack-timeout's data and address recurring instances of particular timeouts, for example by refactoring code so it runs faster or offseting lengthy work to happen asynchronously.
+Rack::Timeout is not a solution to the problem of long-running requests, it's a debug and remediation tool. App developers should track rack-timeout's data and address recurring instances of particular timeouts, for example by refactoring code so it runs faster or offsetting lengthy work to happen asynchronously.
 
 
 Basic Usage
