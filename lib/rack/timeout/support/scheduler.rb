@@ -61,8 +61,11 @@ class Rack::Timeout::Scheduler
     @mx_runner = Mutex.new  # mutex for creating a runner thread
   end
 
+
+  private
+
   # returns the runner thread, creating it if needed
-  private def runner
+   def runner
     @mx_runner.synchronize {
       return @runner unless @runner.nil? || !@runner.alive?
       @joined = false
@@ -71,7 +74,7 @@ class Rack::Timeout::Scheduler
   end
 
   # the actual runner thread loop
-  private def run_loop!
+  def run_loop!
     Thread.current.abort_on_exception = true                       # always be aborting
     sleep_for, run, last_run = nil, nil, Time.now                  # sleep_for: how long to sleep before next run; last_run: time of last run; run: just initializing it outside of the synchronize scope, will contain events to run now
     loop do                                                        # begin event reader loop
@@ -97,6 +100,9 @@ class Rack::Timeout::Scheduler
       last_run = Time.now                                          # store that we did run things at this time, go immediately on to the next loop iteration as it may be time to run more things
     end
   end
+
+
+  public
 
   # waits on the runner thread to finish
   def join
