@@ -1,7 +1,7 @@
 Rack::Timeout
 =============
 
-Abort requests that are taking too long; a subclass of `Rack::Timeout::Error` is raised.
+Abort requests that are taking too long; an exception is raised.
 
 A generous timeout of 15s is the default. It's recommended to set the timeout as low as realistically viable for your application. Most applications will do fine with a setting between 2 and 5 seconds.
 
@@ -67,7 +67,7 @@ The Rabbit Hole
 
 `Rack::Timeout.timeout` (or `Rack::Timeout.service_timeout`) is our principal setting.
 
-*Service time* is the time taken from when a request first enters rack to when its response is sent back. When the application takes longer than `service_timeout` to process a request, the request's status is logged as `timed_out` and a `Rack::Timeout::RequestTimeoutError` error is raised on the application thread. This may be automatically caught by the framework or plugins, so beware. Also, the error is not guaranteed to be raised in a timely fashion, see section below about IO blocks.
+*Service time* is the time taken from when a request first enters rack to when its response is sent back. When the application takes longer than `service_timeout` to process a request, the request's status is logged as `timed_out` and `Rack::Timeout::RequestTimeoutException` or `Rack::Timeout::RequestTimeoutError` is raised on the application thread. This may be automatically caught by the framework or plugins, so beware. Also, the exception is not guaranteed to be raised in a timely fashion, see section below about IO blocks.
 
 Service timeout can be disabled entirely by setting the property to `0` or `false`, at which point the request skips Rack::Timeout's machinery (so no logging will be present).
 
@@ -157,13 +157,13 @@ The value of that entry is an instance of `Rack::Timeout::RequestDetails`, which
 
 *   `state`: the possible states, and their log level, are:
 
-    *   `expired` (`ERROR`): the request is considered too old and is skipped entirely. This happens when `X-Request-Start` is present and older than `wait_timeout`. When in this state, a `Rack::Timeout::RequestExpiryError` exception is raised. See earlier discussion about the `wait_overtime` setting, too.
+    *   `expired` (`ERROR`): the request is considered too old and is skipped entirely. This happens when `X-Request-Start` is present and older than `wait_timeout`. When in this state, `Rack::Timeout::RequestExpiryError` is raised. See earlier discussion about the `wait_overtime` setting, too.
 
     *   `ready` (`INFO`): this is the state a request is in right before it's passed down the middleware chain. Once it's being processed, it'll move on to `active`, and then on to `timed_out` and/or `completed`.
 
     *   `active` (`DEBUG`): the request is being actively processed in the application thread. This is signaled repeatedly every ~1s until the request completes or times out.
 
-    *   `timed_out` (`ERROR`): the request ran for longer than the determined timeout and was aborted. A `Rack::Timeout::RequestTimeoutError` error is raised in the application when this occurs. If this error gets caught, handled, and not re-raised in the app or framework (which will generally happen with Rails and Sinatra), this state will not be final, `completed` will be set after the framework is done with it.
+    *   `timed_out` (`ERROR`): the request ran for longer than the determined timeout and was aborted. `Rack::Timeout::RequestTimeoutException` is raised in the application when this occurs. If this exception gets caught, handled, and not re-raised in the app or framework (which will generally happen with Rails and Sinatra), this state will not be final, `completed` will be set after the framework is done with it. (If the exception does bubble up, it's caught by rack-timeout and re-raised as `Rack::Timeout::RequestTimeoutError`, which descends from RuntimeError.)
 
     *   `completed` (`INFO`): the request completed and Rack::Timeout is done with it. This does not mean the request completed *successfully*. Rack::Timeout does not concern itself with that. As mentioned just above, a timed out request may still end up with a `completed` state if the framework has dealt with the timeout exception.
 
@@ -171,17 +171,23 @@ The value of that entry is an instance of `Rack::Timeout::RequestDetails`, which
 Errors
 ------
 
-Rack::Timeout can raise two types of exceptions. Both descend from `Rack::Timeout::Error`, which itself descends from `Exception`, and is thus not implicitly rescued from. They are:
+Rack::Timeout can raise three types of exceptions. They are:
 
-*   `Rack::Timeout::RequestTimeoutError`: this is raised when a request has run for longer than the specified timeout. It's raised by the rack-timeout timer thread in the application thread, at the point in the stack the app happens to be in when the timeout is triggered. This exception can generally be caught within the application, but in doing so you're working past the timeout. This is ok for quick cleanup work but shouldn't be abused as Rack::Timeout will not kick in twice for the same request.
+Two descend from `Rack::Timeout::Error`, which itself descends from `RuntimeError` and is generally caught by an unqualified `raise`. The third, `RequestTimeoutException`, is more complicated and the most important.
 
 *   `Rack::Timeout::RequestExpiryError`: this is raised when a request is skipped for being too old (see Wait Timeout section). This error cannot generally be rescued from inside a Rails controller action as it happens before the request has a chance to enter Rails.
 
     This shouldn't be different for other frameworks, unless you have something above Rack::Timeout in the middleware stack, which you generally shouldn't.
 
+*   `Rack::Timeout::RequestTimeoutException`: this is raised when a request has run for longer than the specified timeout. This descends from `Exception`, not from `Rack::Timeout::Error` (it has to be rescued from explicitly). It's raised by the rack-timeout timer thread in the application thread, at the point in the stack the app happens to be in when the timeout is triggered. This exception could be caught explicitly within the application, but in doing so you're working past the timeout. This is ok for quick cleanup work but shouldn't be abused as Rack::Timeout will not kick in twice for the same request.
+
+    Rails will generally intercept `Exception`s, but in plain Rack apps, this exception will be caught by rack-timeout and re-raised as a `Rack::Timeout::RequestTimeoutError`. This is to prevent an `Exception` from bubbling up beyond rack-timeout and to the server.
+
+*   `Rack::Timeout::RequestTimeoutError` is the third type, it descends from `Rack::Timeout::Error`, but it's only really seen in the case described above. It'll not be seen in a standard Rails app, and will only be seen in Sinatra if rescuing from exceptions is disabled.
+
 You shouldn't rescue from these errors for reporting purposes. Instead, you can subscribe for state change notifications with observers.
 
-If you're trying to test that a `Rack::Timeout::RequestTimeoutError` is raised in an action in your Rails application, you **must do so in integration tests**. Please note that Rack::Timeout will not kick in for functional tests as they bypass the rack middleware stack.
+If you're trying to test that a `Rack::Timeout::RequestTimeoutException` is raised in an action in your Rails application, you **must do so in integration tests**. Please note that Rack::Timeout will not kick in for functional tests as they bypass the rack middleware stack.
 
 [More details about testing middleware with Rails here][pablobm].
 
