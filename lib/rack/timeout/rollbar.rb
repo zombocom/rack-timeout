@@ -3,6 +3,8 @@ require_relative "core"
 # Groups timeout exceptions in rollbar by exception class, http method, and url.
 # Usage: after requiring rollbar, call:
 #   require "rack/timeout/rollbar"
+#
+# This is somewhat experimental and very lightly tested.
 
 module Rack::Timeout::Rollbar
   def build_payload(level, message, exception, extra)
