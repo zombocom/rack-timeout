@@ -21,6 +21,7 @@ module Rack
       include ExceptionWithEnv
     end
 
+    REQUEST_TIME_FORMAT = '%.fms'.freeze
     RequestDetails = Struct.new(
       :id,        # a unique identifier for the request. informative-only.
       :wait,      # seconds the request spent in the web server before being serviced by rack
@@ -29,7 +30,7 @@ module Rack
       :state,     # the request's current state, see below:
     ) {
       def ms(k)   # helper method used for formatting values in milliseconds
-        "%.fms" % (self[k] * 1000) if self[k]
+        REQUEST_TIME_FORMAT % (self[k] * 1000) if self[k]
       end
     }
     VALID_STATES = [
@@ -39,7 +40,7 @@ module Rack
       :timed_out, # This request has run for too long and we're raising a timeout error in it
       :completed, # We're done with this request (also set after having timed out a request)
       ]
-    ENV_INFO_KEY = "rack-timeout.info" # key under which each request's RequestDetails instance is stored in its env.
+    ENV_INFO_KEY = "rack-timeout.info".freeze # key under which each request's RequestDetails instance is stored in its env.
 
     # helper methods to setup getter/setters for timeout properties. Ensure they're always positive numbers or false. When set to false (or 0), their behaviour is disabled.
     class << self
@@ -156,8 +157,9 @@ module Rack
 
     # This method determines if a body is present. requests with a body (generally POST, PUT) can have a lengthy body which may have taken a while to be received by the web server, inflating their computed wait time. This in turn could lead to unwanted expirations. See wait_overtime property as a way to overcome those.
     # This is a code extraction for readability, this method is only called from a single point.
+    CHUNKED = 'chunked'.freeze
     def self._request_has_body?(env)
-      return true  if env["HTTP_TRANSFER_ENCODING"] == "chunked"
+      return true  if env["HTTP_TRANSFER_ENCODING"] == CHUNKED
       return false if env["CONTENT_LENGTH"].nil?
       return false if env["CONTENT_LENGTH"].to_i.zero?
       true
