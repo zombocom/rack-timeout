@@ -106,29 +106,29 @@ module Rack
       info.timeout = RT.service_timeout # nice and simple, when service_past_wait is true, not so much otherwise:
       info.timeout = seconds_service_left if !RT.service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < RT.service_timeout
 
-      RT._set_state! env, :ready
+      RT._set_state! env, :ready                            # we're good to go, but have done nothing yet
 
-      heartbeat_event = nil
-      update_service = ->(status = :active) {
-        heartbeat_event.cancel! if status != :active
-        info.service = Time.now - time_started_service
-        RT._set_state! env, status
+      heartbeat_event = nil                                 # init var so it's in scope for following proc
+      register_state_change = ->(status = :active) {        # updates service time and state; will run every second
+        heartbeat_event.cancel! if status != :active        # if the request is no longer active we should stop updating every second
+        info.service = Time.now - time_started_service      # update service time
+        RT._set_state! env, status                          # update status
       }
-      heartbeat_event = RT::Scheduler.run_every(1) { update_service.call :active }
+      heartbeat_event = RT::Scheduler.run_every(1) { register_state_change.call :active }  # start updating every second while active; if log level is debug, this will log every sec
 
-      timeout = RT::Scheduler::Timeout.new do |app_thread|
-        update_service.call :timed_out
+      timeout = RT::Scheduler::Timeout.new do |app_thread|  # creates a timeout instance responsible for timing out the request. the given block runs if timed out
+        register_state_change.call :timed_out
         app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
       end
 
-      response = timeout.timeout(info.timeout) do
-        begin  @app.call(env)
-        rescue RequestTimeoutException => e
-          raise RequestTimeoutError.new(env), e.message, e.backtrace
+      response = timeout.timeout(info.timeout) do           # perform request with timeout
+        begin  @app.call(env)                               # boom, send request down the middleware chain
+        rescue RequestTimeoutException => e                 # will actually hardly ever get to this point because frameworks tend to catch this. see README for more
+          raise RequestTimeoutError.new(env), e.message, e.backtrace  # but in case it does get here, re-reaise RequestTimeoutException as RequestTimeoutError
         end
       end
 
-      update_service.call :completed
+      register_state_change.call :completed
       response
     end
 
