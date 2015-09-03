@@ -213,7 +213,6 @@ You can remove an observer with `unregister_state_change_observer`:
 Rack::Timeout.unregister_state_change_observer(:a_unique_name)
 ```
 
-
 rack-timeout's logging is implemented using an observer; see `Rack::Timeout::StateChangeLoggingObserver` in logging-observer.rb for the implementation.
 
 Custom observers might be used to do cleanup, store statistics on request length, timeouts, etc., and potentially do performance tuning on the fly.
