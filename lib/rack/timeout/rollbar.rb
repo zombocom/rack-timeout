@@ -17,6 +17,9 @@ module Rack::Timeout::Rollbar
     return payload unless data.respond_to? :[]=
 
     request = ::Rack::Request.new(exception.env)
+    payload = payload.dup
+    data    = data.dup
+    payload["data"] = data
 
     data["fingerprint"] = [
       exception.class.name,
