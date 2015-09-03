@@ -14,7 +14,7 @@ module Rack::Timeout::Rollbar
     return payload unless payload.respond_to? :[]
 
     data = payload["data"]
-    return data unless data.respond_to? :[]=
+    return payload unless data.respond_to? :[]=
 
     request = ::Rack::Request.new(exception.env)
 
