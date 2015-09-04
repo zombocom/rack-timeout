@@ -14,11 +14,12 @@ module Rack::Timeout::Rollbar
   def build_payload(level, message, exception, extra)
     payload = super(level, message, exception, extra)
 
-    return payload unless exception.is_a? ::Rack::Timeout::ExceptionWithEnv
-    return payload unless payload.respond_to? :[]
+    return payload unless exception.is_a?(::Rack::Timeout::ExceptionWithEnv) \
+                       && payload.respond_to?(:[])                           \
+                       && payload.respond_to?(:[]=)
 
     data = payload["data"]
-    return payload unless data.respond_to? :[]=
+    return payload unless data.respond_to?(:[]=)
 
     request = ::Rack::Request.new(exception.env)
     payload = payload.dup
