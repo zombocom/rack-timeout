@@ -1,3 +1,7 @@
+0.3.2
+=====
+- Fixes calling timeout with a value of 0 (issue #90)
+
 0.3.1
 =====
 - Rollbar module improvements

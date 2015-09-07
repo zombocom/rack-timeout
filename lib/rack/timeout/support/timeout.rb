@@ -18,7 +18,7 @@ class Rack::Timeout::Scheduler::Timeout
     job = @scheduler.run_in(secs) { @on_timeout.call thr }  # schedule this thread to be timed out; should get cancelled if block completes on time
     return block.call                                       # do what you gotta do
   ensure                                                    #
-    job.cancel!                                             # cancel the scheduled timeout job; if the block completed on time, this
+    job.cancel! if job                                      # cancel the scheduled timeout job; if the block completed on time, this
   end                                                       # will get called before the timeout code's had a chance to run.
 
   # timeout method on singleton instance for when a custom on_timeout is not required
