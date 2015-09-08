@@ -13,7 +13,7 @@
 - reshuffle error types: RequestExpiryError is again a RuntimeError, and timeouts raise a RequestTimeoutException, an Exception, and not descending from Rack::Timeout::Error (see README for more)
 - don't insert middleware for rails in test environment
 - add convenience module Rack::Timeout::Logger (see README for more)
-- StageChangeLoggingObserver renamed to StageChangeLoggingObserver, works slightly differently too
+- StageChangeLoggingObserver renamed to StateChangeLoggingObserver, works slightly differently too
 - file layout reorganization (see 6e82c276 for details)
 - CHANGELOG file is now in the gem (@dbackeus)
 - add optional and experimental support for grouping errors by url under rollbar. see "rack/timeout/rollbar" for usage
