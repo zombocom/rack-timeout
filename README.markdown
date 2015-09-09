@@ -27,7 +27,7 @@ That'll load rack-timeout and set it up as a Rails middleware using the default 
 To use a custom timeout, create an initializer file:
 
 ```ruby
-# config/initializers/timeout.rb
+# config/initializers/rack_timeout.rb
 Rack::Timeout.timeout = 5  # seconds
 ```
 
@@ -41,7 +41,7 @@ gem "rack-timeout", require:"rack/timeout/base"
 ```
 
 ```ruby
-# config/initializers/timeout.rb
+# config/initializers/rack_timeout.rb
 
 #  insert middleware wherever you want in the stack
 Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout
