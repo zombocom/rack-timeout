@@ -1,3 +1,7 @@
+0.3.3-pre
+=====
+- Rollbar module considered final
+
 0.3.2
 =====
 - Fixes calling timeout with a value of 0 (issue #90)

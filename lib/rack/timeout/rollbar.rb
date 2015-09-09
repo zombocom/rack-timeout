@@ -6,8 +6,6 @@ require_relative "core"
 #
 #   require "rack/timeout/rollbar"
 #
-# This is somewhat experimental and very lightly tested.
-#
 # Ruby 2.0 is required as we use `Module.prepend`.
 
 module Rack::Timeout::Rollbar

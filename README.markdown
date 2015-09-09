@@ -194,6 +194,20 @@ If you're trying to test that a `Rack::Timeout::RequestTimeoutException` is rais
 [pablobm]: http://stackoverflow.com/a/8681208/13989
 
 
+### Rollbar
+
+Because rack-timeout may raise at any point in the codepath of a timed-out request, the stack traces for similar requests may differ, causing rollbar to create separate entries for each timeout.
+
+A Rollbar module is provided which causes rack-timeout errors to be grouped by exception type, request HTTP method, and URL, so all timeouts for a particular endpoint are reported under the same entry.
+
+To enable it, simply require it after having required rollbar. For example, in your rollbar initializer file, do:
+
+    require "rollbar"
+    require "rack/timeout/rollbar"
+
+It'll set itself up.
+
+
 Observers
 ---------
 
