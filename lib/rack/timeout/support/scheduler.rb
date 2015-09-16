@@ -65,7 +65,7 @@ class Rack::Timeout::Scheduler
   private
 
   # returns the runner thread, creating it if needed
-   def runner
+  def runner
     @mx_runner.synchronize {
       return @runner unless @runner.nil? || !@runner.alive?
       @joined = false
