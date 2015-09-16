@@ -26,7 +26,7 @@ module Rack
       :wait,      # seconds the request spent in the web server before being serviced by rack
       :service,   # time rack spent processing the request (updated ~ every second)
       :timeout,   # the actual computed timeout to be used for this request
-      :state,     # the request's current state, see below:
+      :state,     # the request's current state, see VALID_STATES below
     ) {
       def ms(k)   # helper method used for formatting values in milliseconds
         "%.fms" % (self[k] * 1000) if self[k]
@@ -124,7 +124,7 @@ module Rack
       response = timeout.timeout(info.timeout) do           # perform request with timeout
         begin  @app.call(env)                               # boom, send request down the middleware chain
         rescue RequestTimeoutException => e                 # will actually hardly ever get to this point because frameworks tend to catch this. see README for more
-          raise RequestTimeoutError.new(env), e.message, e.backtrace  # but in case it does get here, re-reaise RequestTimeoutException as RequestTimeoutError
+          raise RequestTimeoutError.new(env), e.message, e.backtrace  # but in case it does get here, re-raise RequestTimeoutException as RequestTimeoutError
         end
       end
 
