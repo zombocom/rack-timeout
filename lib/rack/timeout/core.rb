@@ -71,8 +71,12 @@ module Rack
       @service_past_wait = false          # we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
     end
 
-    def initialize(app)
+    def initialize(app, options = {})
       @app = app
+      options.each do |attr, value|
+        writer = "#{attr}=".to_sym
+        self.class.send(writer, value) if self.class.respond_to? writer
+      end
     end
 
 
