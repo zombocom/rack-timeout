@@ -207,6 +207,13 @@ To enable it, simply require it after having required rollbar. For example, in y
 
 It'll set itself up.
 
+If you wish to use a custom fingerprint for grouping:
+
+    Rack::Timeout::Rollbar.fingerprint do |exception, env|
+      # return a string derived from exception and env
+    end
+
+
 
 Observers
 ---------

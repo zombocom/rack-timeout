@@ -7,8 +7,30 @@ require_relative "core"
 #   require "rack/timeout/rollbar"
 #
 # Ruby 2.0 is required as we use `Module.prepend`.
+#
+# To use a custom fingerprint for grouping:
+#
+#   Rack::Timeout::Rollbar.fingerprint do |exception, env|
+#     # … return some kind of string derived from exception and env
+#   end
 
 module Rack::Timeout::Rollbar
+
+  def self.fingerprint(&block)
+    define_method(:rack_timeout_fingerprint) { |exception, env| block[exception, env] }
+  end
+
+  def self.default_rack_timeout_fingerprint(exception, env)
+    request = ::Rack::Request.new(env)
+    [ exception.class.name,
+      request.request_method,
+      request.path
+    ].join(" ")
+  end
+
+  fingerprint &method(:default_rack_timeout_fingerprint)
+
+
   def build_payload(level, message, exception, extra)
     payload = super(level, message, exception, extra)
 
@@ -19,16 +41,10 @@ module Rack::Timeout::Rollbar
     data = payload["data"]
     return payload unless data.respond_to?(:[]=)
 
-    request = ::Rack::Request.new(exception.env)
-    payload = payload.dup
-    data    = data.dup
-    payload["data"] = data
-
-    data["fingerprint"] = [
-      exception.class.name,
-      request.request_method,
-      request.fullpath
-      ].join(" ")
+    payload             = payload.dup
+    data                = data.dup
+    data["fingerprint"] = rack_timeout_fingerprint(exception, exception.env)
+    payload["data"]     = data
 
     return payload
   end
