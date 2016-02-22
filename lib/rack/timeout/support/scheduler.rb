@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 require_relative "namespace"
-require_relative "assert-types"
 
 # Runs code at a later time
 #
@@ -17,15 +16,9 @@ require_relative "assert-types"
 # One could also instantiate separate instances which would get you separate run threads, but generally there's no point in it.
 class Rack::Timeout::Scheduler
   MAX_IDLE_SECS = 30 # how long the runner thread is allowed to live doing nothing
-  include Rack::Timeout::AssertTypes
 
   # stores a proc to run later, and the time it should run at
   class RunEvent < Struct.new(:time, :proc)
-    def initialize(time, proc)
-      Rack::Timeout::AssertTypes.assert_types! time => Time, proc => Proc
-      super
-    end
-
     def cancel!
       @cancelled = true
     end
@@ -112,7 +105,6 @@ class Rack::Timeout::Scheduler
 
   # adds a RunEvent struct to the run schedule
   def schedule(event)
-    assert_types! event => RunEvent
     @mx_events.synchronize { @events << event }
     runner.run  # wakes up the runner thread so it can recalculate sleep length taking this new event into consideration
     return event
@@ -120,7 +112,6 @@ class Rack::Timeout::Scheduler
 
   # reschedules an event to run at a different time. returns nil and does nothing if the event is not already in the queue (might've run already), otherwise updates the event time in-place; returns the updated event
   def reschedule(event, time)
-    assert_types! event => RunEvent, time => Time
     @mx_events.synchronize {
       return unless @events.include? event
       event.time = time
