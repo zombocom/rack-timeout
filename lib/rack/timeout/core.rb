@@ -2,6 +2,7 @@
 require "securerandom"
 require_relative "support/scheduler"
 require_relative "support/timeout"
+require_relative "legacy"
 
 module Rack
   class Timeout
@@ -41,37 +42,29 @@ module Rack
       ]
     ENV_INFO_KEY = "rack-timeout.info" # key under which each request's RequestDetails instance is stored in its env.
 
-    # helper methods to setup getter/setters for timeout properties. Ensure they're always positive numbers or false. When set to false (or 0), their behaviour is disabled.
-    class << self
-      def set_timeout_property(property_name, value)
-        unless value == false || (value.is_a?(Numeric) && value >= 0)
-          raise ArgumentError, "value for #{property_name} should be false, zero, or a positive number."
-        end
-        value = false if value && value.zero? # zero means we're disabling the feature
-        instance_variable_set("@#{property_name}", value)
-      end
-
-      def timeout_property(property_name, start_value)
-        singleton_class.instance_eval do
-          attr_reader property_name
-          define_method("#{property_name}=") { |v| set_timeout_property(property_name, v) }
-        end
-        set_timeout_property(property_name, start_value)
+    # helper methods to read timeout properties. Ensure they're always positive numbers or false. When set to false (or 0), their behaviour is disabled.
+    def read_timeout_property value, default
+      case value
+      when nil   ; default
+      when false ; false
+      when 0     ; false
+      else
+        value.is_a?(Numeric) && value > 0 or raise ArgumentError, "value for #{property_name} should be false, zero, or a positive number."
+        value
       end
     end
 
-    # all values are in seconds
-    timeout_property :wait_timeout,    30 # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
-    timeout_property :wait_overtime,   60 # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
-    timeout_property :service_timeout, 15 # How long the application can take to complete handling the request once it's passed down to it.
+    attr_reader \
+      :service_timeout,   # How long the application can take to complete handling the request once it's passed down to it.
+      :wait_timeout,      # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
+      :wait_overtime,     # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
+      :service_past_wait  # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
 
-    class << self
-      alias_method :timeout=, :service_timeout= # legacy compatibility setter
-      attr_accessor :service_past_wait    # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value.
-      @service_past_wait = false          # we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
-    end
-
-    def initialize(app)
+    def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:false)
+      @service_timeout   = read_timeout_property service_timeout, 15
+      @wait_timeout      = read_timeout_property wait_timeout,    30
+      @wait_overtime     = read_timeout_property wait_overtime,   60
+      @service_past_wait = service_past_wait
       @app = app
     end
 
@@ -83,14 +76,14 @@ module Rack
 
       time_started_service = Time.now                      # The time the request started being processed by rack
       time_started_wait    = RT._read_x_request_start(env) # The time the request was initially received by the web server (if available)
-      effective_overtime   = (RT.wait_overtime && RT._request_has_body?(env)) ? RT.wait_overtime : 0 # additional wait timeout (if set and applicable)
+      effective_overtime   = (wait_overtime && RT._request_has_body?(env)) ? wait_overtime : 0 # additional wait timeout (if set and applicable)
       seconds_service_left = nil
 
       # if X-Request-Start is present and wait_timeout is set, expire requests older than wait_timeout (+wait_overtime when applicable)
-      if time_started_wait && RT.wait_timeout
+      if time_started_wait && wait_timeout
         seconds_waited          = time_started_service - time_started_wait # how long it took between the web server first receiving the request and rack being able to handle it
         seconds_waited          = 0 if seconds_waited < 0                  # make up for potential time drift between the routing server and the application server
-        final_wait_timeout      = RT.wait_timeout + effective_overtime     # how long the request will be allowed to have waited
+        final_wait_timeout      = wait_timeout + effective_overtime        # how long the request will be allowed to have waited
         seconds_service_left    = final_wait_timeout - seconds_waited      # first calculation of service timeout (relevant if request doesn't get expired, may be overriden later)
         info.wait, info.timeout = seconds_waited, final_wait_timeout       # updating the info properties; info.timeout will be the wait timeout at this point
         if seconds_service_left <= 0 # expire requests that have waited for too long in the queue (as they are assumed to have been dropped by the web server / routing layer at this point)
@@ -100,11 +93,11 @@ module Rack
       end
 
       # pass request through if service_timeout is false (i.e., don't time it out at all.)
-      return @app.call(env) unless RT.service_timeout
+      return @app.call(env) unless service_timeout
 
       # compute actual timeout to be used for this request; if service_past_wait is true, this is just service_timeout. If false (the default), and wait time was determined, we'll use the shortest value between seconds_service_left and service_timeout. See comment above at service_past_wait for justification.
-      info.timeout = RT.service_timeout # nice and simple, when service_past_wait is true, not so much otherwise:
-      info.timeout = seconds_service_left if !RT.service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < RT.service_timeout
+      info.timeout = service_timeout # nice and simple, when service_past_wait is true, not so much otherwise:
+      info.timeout = seconds_service_left if !service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < service_timeout
 
       RT._set_state! env, :ready                            # we're good to go, but have done nothing yet
 
