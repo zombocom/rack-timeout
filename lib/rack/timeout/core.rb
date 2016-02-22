@@ -84,7 +84,8 @@ module Rack
       info      = (env[ENV_INFO_KEY] ||= RequestDetails.new)
       info.id ||= env["HTTP_X_REQUEST_ID"] || SecureRandom.hex
 
-      time_started_service = fsecs                         # The time the request started being processed by rack
+      time_started_service = Time.now                      # The wall time the request started being processed by rack
+      ts_started_service   = fsecs                         # The monotonic time the request started being processed by rack
       time_started_wait    = RT._read_x_request_start(env) # The time the request was initially received by the web server (if available)
       effective_overtime   = (RT.wait_overtime && RT._request_has_body?(env)) ? RT.wait_overtime : 0 # additional wait timeout (if set and applicable)
       seconds_service_left = nil
@@ -114,7 +115,7 @@ module Rack
       heartbeat_event = nil                                 # init var so it's in scope for following proc
       register_state_change = ->(status = :active) {        # updates service time and state; will run every second
         heartbeat_event.cancel! if status != :active        # if the request is no longer active we should stop updating every second
-        info.service = fsecs - time_started_service         # update service time
+        info.service = fsecs - ts_started_service           # update service time
         RT._set_state! env, status                          # update status
       }
       heartbeat_event = RT::Scheduler.run_every(1) { register_state_change.call :active }  # start updating every second while active; if log level is debug, this will log every sec
