@@ -49,7 +49,7 @@ module Rack
       when false ; false
       when 0     ; false
       else
-        value.is_a?(Numeric) && value > 0 or raise ArgumentError, "value for #{property_name} should be false, zero, or a positive number."
+        value.is_a?(Numeric) && value > 0 or raise ArgumentError, "value #{value.inspect} should be false, zero, or a positive number."
         value
       end
     end
