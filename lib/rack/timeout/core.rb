@@ -114,21 +114,25 @@ module Rack
         info.service = Time.now - time_started_service      # update service time
         RT._set_state! env, status                          # update status
       }
-      heartbeat_event = RT::Scheduler.run_every(1) { register_state_change.call :active }  # start updating every second while active; if log level is debug, this will log every sec
 
-      timeout = RT::Scheduler::Timeout.new do |app_thread|  # creates a timeout instance responsible for timing out the request. the given block runs if timed out
-        register_state_change.call :timed_out
-        app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
-      end
+      begin
+        heartbeat_event = RT::Scheduler.run_every(1) { register_state_change.call :active }  # start updating every second while active; if log level is debug, this will log every sec
 
-      response = timeout.timeout(info.timeout) do           # perform request with timeout
-        begin  @app.call(env)                               # boom, send request down the middleware chain
-        rescue RequestTimeoutException => e                 # will actually hardly ever get to this point because frameworks tend to catch this. see README for more
-          raise RequestTimeoutError.new(env), e.message, e.backtrace  # but in case it does get here, re-raise RequestTimeoutException as RequestTimeoutError
+        timeout = RT::Scheduler::Timeout.new do |app_thread|  # creates a timeout instance responsible for timing out the request. the given block runs if timed out
+          register_state_change.call :timed_out
+          app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
         end
+
+        response = timeout.timeout(info.timeout) do           # perform request with timeout
+          begin  @app.call(env)                               # boom, send request down the middleware chain
+          rescue RequestTimeoutException => e                 # will actually hardly ever get to this point because frameworks tend to catch this. see README for more
+            raise RequestTimeoutError.new(env), e.message, e.backtrace  # but in case it does get here, re-raise RequestTimeoutException as RequestTimeoutError
+          end
+        end
+      ensure
+        register_state_change.call :completed
       end
 
-      register_state_change.call :completed
       response
     end
 
