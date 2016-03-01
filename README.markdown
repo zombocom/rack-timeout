@@ -139,6 +139,15 @@ That said, it's something to be aware of, and may explain some eerie wonkiness s
 [handle-interrupt]: http://www.ruby-doc.org/core-2.1.3/Thread.html#method-c-handle_interrupt
 
 
+### Time Out Early and Often
+
+Because of the aforementioned issues, it's recommended you set library-specific timeouts and leave Rack::Timeout as a last resort measure. Library timeouts will generally take care of IO issues and abort the operation safely. See [The Ultimate Guide to Ruby Timeouts][ruby-timeouts].
+
+You'll want to set all relevant timeouts to something lower than Rack::Timeout's `service_timeout`. Generally you want them to be at least 1s lower, so as to account for time spent elsewhere during the request's lifetime while still giving libraries a chance to time out before Rack::Timeout.
+
+[ruby-timeouts]: https://github.com/ankane/the-ultimate-guide-to-ruby-timeouts
+
+
 Request Lifetime
 ----------------
 
