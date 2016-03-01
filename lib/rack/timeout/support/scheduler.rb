@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require_relative "namespace"
+require_relative "monotonic_time"
 
 # Runs code at a later time
 #
@@ -16,9 +17,10 @@ require_relative "namespace"
 # One could also instantiate separate instances which would get you separate run threads, but generally there's no point in it.
 class Rack::Timeout::Scheduler
   MAX_IDLE_SECS = 30 # how long the runner thread is allowed to live doing nothing
+  include Rack::Timeout::MonotonicTime # gets us the #fsecs method
 
   # stores a proc to run later, and the time it should run at
-  class RunEvent < Struct.new(:time, :proc)
+  class RunEvent < Struct.new(:monotime, :proc)
     def cancel!
       @cancelled = true
     end
@@ -34,17 +36,17 @@ class Rack::Timeout::Scheduler
   end
 
   class RepeatEvent < RunEvent
-    def initialize(time, proc, every)
-      @start = time
+    def initialize(monotime, proc, every)
+      @start = monotime
       @every = every
       @iter  = 0
-      super(time, proc)
+      super(monotime, proc)
     end
 
     def run!
       super
     ensure
-      self.time = @start + @every * (@iter += 1) until time >= Time.now
+      self.monotime = @start + @every * (@iter += 1) until monotime >= Rack::Timeout::MonotonicTime.fsecs
     end
   end
 
@@ -69,28 +71,28 @@ class Rack::Timeout::Scheduler
   # the actual runner thread loop
   def run_loop!
     Thread.current.abort_on_exception = true                       # always be aborting
-    sleep_for, run, last_run = nil, nil, Time.now                  # sleep_for: how long to sleep before next run; last_run: time of last run; run: just initializing it outside of the synchronize scope, will contain events to run now
+    sleep_for, run, last_run = nil, nil, fsecs                     # sleep_for: how long to sleep before next run; last_run: time of last run; run: just initializing it outside of the synchronize scope, will contain events to run now
     loop do                                                        # begin event reader loop
       @mx_events.synchronize {                                     #
         @events.reject!(&:cancelled?)                              # get rid of cancelled events
         if @events.empty?                                          # if there are no further events …
           return if @joined                                        # exit the run loop if this runner thread has been joined (the thread will die and the join will return)
-          return if Time.now - last_run > MAX_IDLE_SECS            # exit the run loop if done nothing for the past MAX_IDLE_SECS seconds
+          return if fsecs - last_run > MAX_IDLE_SECS               # exit the run loop if done nothing for the past MAX_IDLE_SECS seconds
           sleep_for = MAX_IDLE_SECS                                # sleep for MAX_IDLE_SECS (mind it that we get awaken when new events are scheduled)
         else                                                       #
-          sleep_for = [@events.map(&:time).min - Time.now, 0].max  # if we have events, set to sleep until it's time for the next one to run. (the max bit ensure we don't have negative sleep times)
+          sleep_for = [@events.map(&:monotime).min - fsecs, 0].max # if we have events, set to sleep until it's time for the next one to run. (the max bit ensure we don't have negative sleep times)
         end                                                        #
         @mx_events.sleep sleep_for                                 # do sleep
                                                                    #
-        now = Time.now                                             #
-        run, defer = @events.partition { |ev| ev.time <= now }     # separate events to run now and events to run later
+        now = fsecs                                                #
+        run, defer = @events.partition { |ev| ev.monotime <= now } # separate events to run now and events to run later
         defer += run.select { |ev| ev.is_a? RepeatEvent }          # repeat events both run and are deferred
         @events.replace(defer)                                     # keep only events to run later
       }                                                            #
                                                                    #
       next if run.empty?                                           # done here if there's nothing to run now
-      run.sort_by(&:time).each { |ev| ev.run! }                    # run the events scheduled to run now
-      last_run = Time.now                                          # store that we did run things at this time, go immediately on to the next loop iteration as it may be time to run more things
+      run.sort_by(&:monotime).each { |ev| ev.run! }                # run the events scheduled to run now
+      last_run = fsecs                                             # store that we did run things at this time, go immediately on to the next loop iteration as it may be time to run more things
     end
   end
 
@@ -110,34 +112,25 @@ class Rack::Timeout::Scheduler
     return event
   end
 
-  # reschedules an event to run at a different time. returns nil and does nothing if the event is not already in the queue (might've run already), otherwise updates the event time in-place; returns the updated event
-  def reschedule(event, time)
+  # reschedules an event by the given number of seconds. can be negative to run sooner.
+  # returns nil and does nothing if the event is not already in the queue (might've run already), otherwise updates the event time in-place; returns the updated event.
+  def delay(event, secs)
     @mx_events.synchronize {
       return unless @events.include? event
-      event.time = time
+      event.monotime += secs
       runner.run
       return event
     }
   end
 
-  # reschedules an event by the given number of seconds. can be negative to run sooner.
-  def delay(event, secs)
-    reschedule(event, event.time + secs)
-  end
-
-  # schedules a block to run at a given time; returns the created event object
-  def run_at(time, &block)
-    schedule RunEvent.new(time, block)
-  end
-
   # schedules a block to run in the given number of seconds; returns the created event object
   def run_in(secs, &block)
-    run_at(Time.now + secs, &block)
+    schedule RunEvent.new(fsecs + secs, block)
   end
 
   # schedules a block to run every x seconds; returns the created event object
   def run_every(seconds, &block)
-    schedule RepeatEvent.new(Time.now, block, seconds)
+    schedule RepeatEvent.new(fsecs, block, seconds)
   end
 
 
