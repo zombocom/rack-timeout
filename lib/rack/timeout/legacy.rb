@@ -10,6 +10,19 @@ module Rack::Timeout::ClassLevelProperties
   module ClassMethods
     attr_accessor :service_timeout, :wait_timeout, :wait_overtime, :service_past_wait
     alias_method :timeout=, :service_timeout=
+
+    [ :service_timeout=,
+      :timeout=,
+      :wait_timeout=,
+      :wait_overtime=,
+      :service_past_wait=,
+    ].each do |isetter|
+      setter = instance_method(isetter)
+      define_method(isetter) do |x|
+        warn "`Rack::Timeout.#{isetter}`: class-level settings are deprecated. See README for examples on using the middleware initializer instead."
+        setter.bind(self).call(x)
+      end
+    end
   end
 
   module InstanceMethods
