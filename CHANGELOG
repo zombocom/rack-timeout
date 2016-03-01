@@ -1,5 +1,8 @@
-0.3.3-pre
+0.4.0-pre
 =====
+- Using monotonic time instead of Time.now where available (/ht concurrent-ruby)
+- Settings are now passable to the middleware initializer instead of class-level
+- Rollbar module may take a custom fingerprint block
 - Rollbar module considered final
 
 0.3.2
