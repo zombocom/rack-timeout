@@ -163,9 +163,9 @@ The value of that entry is an instance of `Rack::Timeout::RequestDetails`, which
 
     *   `active` (`DEBUG`): the request is being actively processed in the application thread. This is signaled repeatedly every ~1s until the request completes or times out.
 
-    *   `timed_out` (`ERROR`): the request ran for longer than the determined timeout and was aborted. `Rack::Timeout::RequestTimeoutException` is raised in the application when this occurs. If this exception gets caught, handled, and not re-raised in the app or framework (which will generally happen with Rails and Sinatra), this state will not be final, `completed` will be set after the framework is done with it. (If the exception does bubble up, it's caught by rack-timeout and re-raised as `Rack::Timeout::RequestTimeoutError`, which descends from RuntimeError.)
+    *   `timed_out` (`ERROR`): the request ran for longer than the determined timeout and was aborted. `Rack::Timeout::RequestTimeoutException` is raised in the application when this occurs. This state is not the final one, `completed` will be set after the framework is done with it. (If the exception does bubble up, it's caught by rack-timeout and re-raised as `Rack::Timeout::RequestTimeoutError`, which descends from RuntimeError.)
 
-    *   `completed` (`INFO`): the request completed and Rack::Timeout is done with it. This does not mean the request completed *successfully*. Rack::Timeout does not concern itself with that. As mentioned just above, a timed out request may still end up with a `completed` state if the framework has dealt with the timeout exception.
+    *   `completed` (`INFO`): the request completed and Rack::Timeout is done with it. This does not mean the request completed *successfully*. Rack::Timeout does not concern itself with that. As mentioned just above, a timed out request will still end up with a `completed` state.
 
 
 Errors
