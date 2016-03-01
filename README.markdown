@@ -44,7 +44,7 @@ gem "rack-timeout", require:"rack/timeout/base"
 # config/initializers/rack_timeout.rb
 
 # insert middleware wherever you want in the stack, optionally pass initialization arguments
-Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout, service_timeout:5
+Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout, service_timeout: 5
 ```
 
 ### Sinatra and other Rack apps
@@ -55,14 +55,14 @@ require "rack-timeout"
 
 # Call as early as possible so rack-timeout runs before all other middleware.
 # Setting service_timeout is recommended. If omitted, defaults to 15 seconds.
-use Rack::Timeout, service_timeout:5
+use Rack::Timeout, service_timeout: 5
 ```
 
 
 The Rabbit Hole
 ---------------
 
-Rack::Timeout has four settings, with the following defaults:
+Rack::Timeout takes the following settings, shown here with their default values:
 
 ```
 service_timeout:   15
@@ -74,10 +74,10 @@ service_past_wait: false
 As shown earlier, these settings can be overriden during middleware initialization:
 
 ```ruby
-use Rack::Timeout, service_timeout:5, wait_timeout:false
+use Rack::Timeout, service_timeout: 5, wait_timeout: false
 ```
 
-For legacy reasons, it's also possible to set these at the class level (e.g. `Rack::Timeout.service_timeout = 3`). This is disrecommended tho. Also beware this style takes precedence over all instances' initialization settings.
+For legacy reasons, it's also possible to set these at the class level (e.g. `Rack::Timeout.service_timeout = 3`). This is, however, not recommended. Also beware this style takes precedence over all instances' initialization settings.
 
 
 ### Service Timeout
