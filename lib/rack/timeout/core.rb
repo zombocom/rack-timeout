@@ -122,10 +122,11 @@ module Rack
         begin  @app.call(env)                               # boom, send request down the middleware chain
         rescue RequestTimeoutException => e                 # will actually hardly ever get to this point because frameworks tend to catch this. see README for more
           raise RequestTimeoutError.new(env), e.message, e.backtrace  # but in case it does get here, re-raise RequestTimeoutException as RequestTimeoutError
+        ensure
+          register_state_change.call :completed
         end
       end
 
-      register_state_change.call :completed
       response
     end
 
