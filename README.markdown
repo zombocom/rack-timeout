@@ -311,11 +311,7 @@ source=rack-timeout id=ea7bd3 wait=371ms timeout=10000ms state=timed_out at=erro
 Compatibility
 -------------
 
-This version of Rack::Timeout is compatible with Ruby 1.9.1 and up, and, for Rails apps, Rails 3.x and up.
-
-For applications running Ruby 1.8.x and/or Rails 2.x, use [version 0.0.4][v0.0.4].
-
-[v0.0.4]: https://github.com/heroku/rack-timeout/tree/v0.0.4
+This version of Rack::Timeout is compatible with Ruby 2.1 and up, and, for Rails apps, Rails 3.x and up.
 
 
 ---
