@@ -19,7 +19,7 @@ module Rack::Timeout::ClassLevelProperties
     ].each do |isetter|
       setter = instance_method(isetter)
       define_method(isetter) do |x|
-        warn "`Rack::Timeout.#{isetter}`: class-level settings are deprecated. See README for examples on using the middleware initializer instead."
+        defined?(Rails) or warn "`Rack::Timeout.#{isetter}`: class-level settings are deprecated. See README for examples on using the middleware initializer instead."
         setter.bind(self).call(x)
       end
     end
