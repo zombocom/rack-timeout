@@ -6,7 +6,7 @@ require_relative "core"
 #
 #   require "rack/timeout/rollbar"
 #
-# Ruby 2.0 is required as we use `Module.prepend`.
+# Ruby 2.1 is required as we use `Module.prepend`.
 #
 # To use a custom fingerprint for grouping:
 #
