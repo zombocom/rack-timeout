@@ -1,3 +1,8 @@
+0.4.1
+=====
+- Rails 5 support
+- Remove deprecation warning on timeout setter for Rails apps
+
 0.4.0
 =====
 - Using monotonic time instead of Time.now where available (/ht concurrent-ruby)
