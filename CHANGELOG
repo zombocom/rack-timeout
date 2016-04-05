@@ -1,4 +1,4 @@
-0.4.0-pre
+0.4.0
 =====
 - Using monotonic time instead of Time.now where available (/ht concurrent-ruby)
 - Settings are now passable to the middleware initializer instead of class-level
