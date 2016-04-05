@@ -315,5 +315,5 @@ This version of Rack::Timeout is compatible with Ruby 2.1 and up, and, for Rails
 
 
 ---
-Copyright © 2010-2015 Caio Chassot, released under the MIT license  
+Copyright © 2010-2016 Caio Chassot, released under the MIT license  
 <http://github.com/heroku/rack-timeout>
