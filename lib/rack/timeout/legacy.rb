@@ -8,7 +8,7 @@ require_relative "support/namespace"
 module Rack::Timeout::ClassLevelProperties
 
   module ClassMethods
-    attr_accessor :service_timeout, :wait_timeout, :wait_overtime, :service_past_wait
+    attr_accessor :service_timeout, :wait_timeout, :wait_overtime, :service_past_wait, :conditional_timeout
     alias_method :timeout=, :service_timeout=
 
     [ :service_timeout=,
@@ -16,6 +16,7 @@ module Rack::Timeout::ClassLevelProperties
       :wait_timeout=,
       :wait_overtime=,
       :service_past_wait=,
+      :conditional_timeout=
     ].each do |isetter|
       setter = instance_method(isetter)
       define_method(isetter) do |x|
@@ -29,6 +30,10 @@ module Rack::Timeout::ClassLevelProperties
 
     [:service_timeout, :wait_timeout, :wait_overtime].each do |m|
       define_method(m) { read_timeout_property self.class.send(m), super() }
+    end
+
+    def conditional_timeout
+      self.class.conditional_timeout || super
     end
 
     def service_past_wait

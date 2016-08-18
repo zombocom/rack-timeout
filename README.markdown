@@ -58,6 +58,20 @@ require "rack-timeout"
 use Rack::Timeout, service_timeout: 5
 ```
 
+### Conditional timeout
+
+You can set a conditional timeout per request.
+Although make sure to always meet your requirements (e.g. Heroku 30s timeout) in all cases.
+If the block returns `nil` or `false`, timeout will be disabled for this request.
+
+```ruby
+# set conditional_timeout to a callable block
+# config/initializers/rack_timeout.rb
+Rack::Timeout.conditional_timeout = proc { |env| env["PATH_INFO"] =~ /^\/admin/ ? 20 : 5 }
+
+# equivalent for Sinatra/Rack apps
+use Rack::Timeout, conditional_timeout: ->(env) { env["PATH_INFO"] =~ /^\/admin/ ? 20 : 5 }
+```
 
 The Rabbit Hole
 ---------------

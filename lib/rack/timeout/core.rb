@@ -58,16 +58,18 @@ module Rack
     end
 
     attr_reader \
-      :service_timeout,   # How long the application can take to complete handling the request once it's passed down to it.
-      :wait_timeout,      # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
-      :wait_overtime,     # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
-      :service_past_wait  # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
+      :service_timeout,    # How long the application can take to complete handling the request once it's passed down to it.
+      :wait_timeout,       # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
+      :wait_overtime,      # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
+      :service_past_wait,  # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
+      :conditional_timeout # service_timeout is determined on the fly, evaluating the given block in the middleware context
 
-    def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:false)
-      @service_timeout   = read_timeout_property service_timeout, 15
-      @wait_timeout      = read_timeout_property wait_timeout,    30
-      @wait_overtime     = read_timeout_property wait_overtime,   60
-      @service_past_wait = service_past_wait
+    def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:false, conditional_timeout:nil)
+      @service_timeout     = read_timeout_property service_timeout, 15
+      @wait_timeout        = read_timeout_property wait_timeout,    30
+      @wait_overtime       = read_timeout_property wait_overtime,   60
+      @service_past_wait   = service_past_wait
+      @conditional_timeout = conditional_timeout
       @app = app
     end
 
@@ -95,6 +97,9 @@ module Rack
           raise RequestExpiryError.new(env), "Request older than #{info.ms(:timeout)}."
         end
       end
+
+      # set service timeout from configuration or by calling conditional_timeout block with env
+      service_timeout = conditional_timeout.respond_to?(:call) ? conditional_timeout.call(env) : self.service_timeout
 
       # pass request through if service_timeout is false (i.e., don't time it out at all.)
       return @app.call(env) unless service_timeout
