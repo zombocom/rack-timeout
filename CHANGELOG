@@ -1,3 +1,8 @@
+Unreleased
+=====
+- Adds support for ActionDispatch::RequestId generated request ids
+- Changes uuid format to proper uuid
+
 0.4.2
 =====
 - Ruby 2.0 compatible
