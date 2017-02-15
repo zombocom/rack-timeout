@@ -137,8 +137,6 @@ At the moment rack-timeout does not try to address this issue. As a fail-safe ag
 More detailed explanations of the issues surrounding timing out in ruby during IO blocks can be found at:
 
 - http://redgetan.cc/understanding-timeouts-in-cruby/
-- https://shellycloud.com/blog/2013/06/the-pesky-problem-of-freezing-thin
-
 
 ### Timing Out Inherently Unsafe
 
