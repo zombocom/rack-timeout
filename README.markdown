@@ -12,7 +12,7 @@ Rack::Timeout is not a solution to the problem of long-running requests, it's a 
 
 Basic Usage
 -----------
-
+c
 The following covers currently supported versions of Rails, Rack, Ruby, and Bundler. See the Compatibility section at the end for legacy versions.
 
 ### Rails apps
