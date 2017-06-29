@@ -93,8 +93,10 @@ module Rack
         seconds_service_left    = final_wait_timeout - seconds_waited      # first calculation of service timeout (relevant if request doesn't get expired, may be overriden later)
         info.wait, info.timeout = seconds_waited, final_wait_timeout       # updating the info properties; info.timeout will be the wait timeout at this point
         if seconds_service_left <= 0 # expire requests that have waited for too long in the queue (as they are assumed to have been dropped by the web server / routing layer at this point)
-          RT._set_state! env, :expired
-          raise RequestExpiryError.new(env), "Request older than #{info.ms(:timeout)}."
+          handled = RT._set_state! env, :expired
+          unless handled
+            raise RequestExpiryError.new(env), "Request older than #{info.ms(:timeout)}."
+          end
         end
       end
 
@@ -116,8 +118,10 @@ module Rack
       heartbeat_event = RT::Scheduler.run_every(1) { register_state_change.call :active }  # start updating every second while active; if log level is debug, this will log every sec
 
       timeout = RT::Scheduler::Timeout.new do |app_thread|  # creates a timeout instance responsible for timing out the request. the given block runs if timed out
-        register_state_change.call :timed_out
-        app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
+        handled = register_state_change.call :timed_out
+        unless handled
+          app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
+        end
       end
 
       response = timeout.timeout(info.timeout) do           # perform request with timeout
@@ -189,7 +193,7 @@ module Rack
     private
     # Sends out the notifications. Called internally at the end of `_set_state!`
     def self.notify_state_change_observers(env)
-      @state_change_observers.values.each { |observer| observer.call(env) }
+      @state_change_observers.values.map { |observer| observer.call(env) }.inject(false) { |res, value| res || value.is_a?(Symbol) && value == :handled}
     end
 
   end
