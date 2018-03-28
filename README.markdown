@@ -197,7 +197,7 @@ Errors
 
 Rack::Timeout can raise three types of exceptions. They are:
 
-Two descend from `Rack::Timeout::Error`, which itself descends from `RuntimeError` and is generally caught by an unqualified `raise`. The third, `RequestTimeoutException`, is more complicated and the most important.
+Two descend from `Rack::Timeout::Error`, which itself descends from `RuntimeError` and is generally caught by an unqualified `rescue`. The third, `RequestTimeoutException`, is more complicated and the most important.
 
 *   `Rack::Timeout::RequestTimeoutException`: this is raised when a request has run for longer than the specified timeout. This descends from `Exception`, not from `Rack::Timeout::Error` (it has to be rescued from explicitly). It's raised by the rack-timeout timer thread in the application thread, at the point in the stack the app happens to be in when the timeout is triggered. This exception could be caught explicitly within the application, but in doing so you're working past the timeout. This is ok for quick cleanup work but shouldn't be abused as Rack::Timeout will not kick in twice for the same request.
 
