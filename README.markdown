@@ -24,7 +24,7 @@ gem "rack-timeout"
 
 That'll load rack-timeout and set it up as a Rails middleware using the default timeout of 15s. The middleware is not inserted for the test environment.
 
-To use a custom timeout, create an initializer file:
+To use a custom timeout, set your value on a `RACK_TIMEOUT_SERVICE_TIMEOUT` environment variable, or create an initializer file:
 
 ```ruby
 # config/initializers/rack_timeout.rb
@@ -43,7 +43,7 @@ gem "rack-timeout", require:"rack/timeout/base"
 ```ruby
 # config/initializers/rack_timeout.rb
 
-# insert middleware wherever you want in the stack, optionally pass initialization arguments
+# insert middleware wherever you want in the stack, optionally pass initialization arguments or use environment variables
 Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout, service_timeout: 5
 ```
 
@@ -54,7 +54,7 @@ Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout, 
 require "rack-timeout"
 
 # Call as early as possible so rack-timeout runs before all other middleware.
-# Setting service_timeout is recommended. If omitted, defaults to 15 seconds.
+# Setting service_timeout or `RACK_TIMEOUT_SERVICE_TIMEOUT` environment variable is recommended. If omitted, defaults to 15 seconds.
 use Rack::Timeout, service_timeout: 5
 ```
 
@@ -65,13 +65,13 @@ The Rabbit Hole
 Rack::Timeout takes the following settings, shown here with their default values:
 
 ```
-service_timeout:   15
-wait_timeout:      30
-wait_overtime:     60
-service_past_wait: false
+service_timeout:   15     # RACK_TIMEOUT_SERVICE_TIMEOUT
+wait_timeout:      30     # RACK_TIMEOUT_WAIT_TIMEOUT
+wait_overtime:     60     # RACK_TIMEOUT_WAIT_OVERTIME
+service_past_wait: false  # RACK_TIMEOUT_SERVICE_PAST_WAIT
 ```
 
-As shown earlier, these settings can be overriden during middleware initialization:
+As shown earlier, these settings can be overriden during middleware initialization or environment variables `RACK_TIMEOUT_*` mentioned above. Middleware parameters take precedence:
 
 ```ruby
 use Rack::Timeout, service_timeout: 5, wait_timeout: false
@@ -102,7 +102,7 @@ On Heroku, a request will be dropped when the routing layer sees no data being t
 
 Wait timeout can be disabled entirely by setting the property to `0` or `false`.
 
-A request's computed wait time may affect the service timeout used for it. Basically, a request's wait time plus service time may not exceed the wait timeout. The reasoning for that is based on Heroku router's behavior, that the request would be dropped anyway after the wait timeout. So, for example, with the default settings of `service_timeout=15`, `wait_timeout=30`, a request that had 20 seconds of wait time will not have a service timeout of 15, but instead of 10, as there are only 10 seconds left before `wait_timeout` is reached. This behavior can be disabled by setting `service_past_wait` to `true`. When set, the `service_timeout` setting will always be honored.
+A request's computed wait time may affect the service timeout used for it. Basically, a request's wait time plus service time may not exceed the wait timeout. The reasoning for that is based on Heroku router's behavior, that the request would be dropped anyway after the wait timeout. So, for example, with the default settings of `service_timeout=15`, `wait_timeout=30`, a request that had 20 seconds of wait time will not have a service timeout of 15, but instead of 10, as there are only 10 seconds left before `wait_timeout` is reached. This behavior can be disabled by setting `service_past_wait` to `true`. When set, the `service_timeout` setting will always be honored. Please note that if you're using the `RACK_TIMEOUT_SERVICE_PAST_WAIT` environment variable, any value different than `"false"` will be considered `true`.
 
 The way we're able to infer a request's start time, and from that its wait time, is through the availability of the `X-Request-Start` HTTP header, which is expected to contain the time since epoch in milliseconds. (A concession is made for nginx's sec.msec notation.)
 

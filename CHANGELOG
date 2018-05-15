@@ -1,5 +1,6 @@
 Unreleased
 =====
+- Add support to configure via environment variables
 - Adds support for ActionDispatch::RequestId generated request ids
 - Changes uuid format to proper uuid
 - Remove Rollbar module
