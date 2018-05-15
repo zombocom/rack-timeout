@@ -222,22 +222,32 @@ If you're trying to test that a `Rack::Timeout::RequestTimeoutException` is rais
 
 Because rack-timeout may raise at any point in the codepath of a timed-out request, the stack traces for similar requests may differ, causing rollbar to create separate entries for each timeout.
 
-A Rollbar module is provided which causes rack-timeout errors to be grouped by exception type, request HTTP method, and URL, so all timeouts for a particular endpoint are reported under the same entry.
+The recommended practice is to configure [Custom Fingerprints][rollbar-customfingerprint] on Rollbar.
 
-To enable it, simply require it after having required rollbar. For example, in your rollbar initializer file, do:
+[rollbar-customfingerprint]: https://docs.rollbar.com/docs/custom-grouping/
 
-    require "rollbar"
-    require "rack/timeout/rollbar"
+Example:
 
-It'll set itself up.
+```json
+[
+  {
+    "condition": {
+      "eq": "Rack::Timeout::RequestTimeoutException",
+      "path": "body.trace.exception.class"
+    },
+    "fingerprint": "Rack::Timeout::RequestTimeoutException {{context}}",
+    "title": "Rack::Timeout::RequestTimeoutException {{context}}"
+   }
+]
 
-If you wish to use a custom fingerprint for grouping:
+```
 
-    Rack::Timeout::Rollbar.fingerprint do |exception, env|
-      # return a string derived from exception and env
-    end
+This configuration will generate exceptions following the pattern: `Rack::Timeout::RequestTimeoutException controller#action
+`
 
+On previous versions this configuration was made using `Rack::Timeout::Rollbar` which was removed. [More details on the Issue #122][rollbar-removal-issue].
 
+[rollbar-removal-issue]: https://github.com/heroku/rack-timeout/issues/122
 
 Observers
 ---------
