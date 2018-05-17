@@ -4,6 +4,7 @@ Unreleased
 - Adds support for ActionDispatch::RequestId generated request ids
 - Changes uuid format to proper uuid
 - Remove Rollbar module
+- Remove legacy class setters (#125)
 
 0.4.2
 =====

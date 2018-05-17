@@ -3,7 +3,6 @@ require "securerandom"
 require_relative "support/monotonic_time"
 require_relative "support/scheduler"
 require_relative "support/timeout"
-require_relative "legacy"
 
 module Rack
   class Timeout
