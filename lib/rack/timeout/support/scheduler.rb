@@ -21,6 +21,11 @@ class Rack::Timeout::Scheduler
 
   # stores a proc to run later, and the time it should run at
   class RunEvent < Struct.new(:monotime, :proc)
+    def initialize(*args)
+      @cancelled = false
+      super(*args)
+    end
+
     def cancel!
       @cancelled = true
     end
@@ -51,6 +56,7 @@ class Rack::Timeout::Scheduler
   end
 
   def initialize
+    @runner    = nil
     @events    = []         # array of `RunEvent`s
     @mx_events = Mutex.new  # mutex to change said array
     @mx_runner = Mutex.new  # mutex for creating a runner thread

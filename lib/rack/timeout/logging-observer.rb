@@ -8,6 +8,9 @@ class Rack::Timeout::StateChangeLoggingObserver
                       :timed_out => :error,
                       :completed => :info,
                     }
+  def initialize
+    @logger = nil
+  end
 
   # returns the Proc to be used as the observer callback block
   def callback
