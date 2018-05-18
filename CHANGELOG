@@ -1,9 +1,9 @@
-Unreleased
+0.5.0
 =====
-- Add support to configure via environment variables
-- Adds support for ActionDispatch::RequestId generated request ids
-- Changes uuid format to proper uuid
-- Remove Rollbar module
+- Add support to configure via environment variables (#105)
+- Adds support for ActionDispatch::RequestId generated request ids (#115)
+- Changes uuid format to proper uuid (#115)
+- Remove Rollbar module (#124)
 - Remove legacy class setters (#125)
 
 0.4.2
