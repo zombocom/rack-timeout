@@ -8,4 +8,13 @@ Gem::Specification.new do |spec|
   spec.email       = "caio@heroku.com"
   spec.files       = Dir[*%w( MIT-LICENSE CHANGELOG README.markdown lib/**/* )]
   spec.license     = "MIT"
+
+  spec.test_files = Dir.glob("test/**/*").concat([
+    "Gemfile",
+    "Rakefile"
+  ])
+
+  spec.add_development_dependency("rake")
+  spec.add_development_dependency("rack-test")
+  spec.add_development_dependency("test-unit")
 end
