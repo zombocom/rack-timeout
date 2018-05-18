@@ -22,14 +22,7 @@ The following covers currently supported versions of Rails, Rack, Ruby, and Bund
 gem "rack-timeout"
 ```
 
-That'll load rack-timeout and set it up as a Rails middleware using the default timeout of 15s. The middleware is not inserted for the test environment.
-
-To use a custom timeout, set your value on a `RACK_TIMEOUT_SERVICE_TIMEOUT` environment variable, or create an initializer file:
-
-```ruby
-# config/initializers/rack_timeout.rb
-Rack::Timeout.service_timeout = 5  # seconds
-```
+This will load rack-timeout and set it up as a Rails middleware using the default timeout of 15s. The middleware is not inserted for the test environment. You can modify the timeout by setting a `RACK_TIMEOUT_SERVICE_TIMEOUT` environment variable.
 
 ### Rails apps, manually
 
@@ -76,9 +69,6 @@ As shown earlier, these settings can be overriden during middleware initializati
 ```ruby
 use Rack::Timeout, service_timeout: 5, wait_timeout: false
 ```
-
-For legacy reasons, it's also possible to set these at the class level (e.g. `Rack::Timeout.service_timeout = 3`). This is, however, not recommended. Also beware this style takes precedence over all instances' initialization settings.
-
 
 ### Service Timeout
 
@@ -202,9 +192,9 @@ Two descend from `Rack::Timeout::Error`, which itself descends from `RuntimeErro
 *   `Rack::Timeout::RequestTimeoutException`: this is raised when a request has run for longer than the specified timeout. This descends from `Exception`, not from `Rack::Timeout::Error` (it has to be rescued from explicitly). It's raised by the rack-timeout timer thread in the application thread, at the point in the stack the app happens to be in when the timeout is triggered. This exception could be caught explicitly within the application, but in doing so you're working past the timeout. This is ok for quick cleanup work but shouldn't be abused as Rack::Timeout will not kick in twice for the same request.
 
     Rails will generally intercept `Exception`s, but in plain Rack apps, this exception will be caught by rack-timeout and re-raised as a `Rack::Timeout::RequestTimeoutError`. This is to prevent an `Exception` from bubbling up beyond rack-timeout and to the server.
-    
+
 *   `Rack::Timeout::RequestTimeoutError` descends from `Rack::Timeout::Error`, but it's only really seen in the case described above. It'll not be seen in a standard Rails app, and will only be seen in Sinatra if rescuing from exceptions is disabled.
-    
+
 *   `Rack::Timeout::RequestExpiryError`: this is raised when a request is skipped for being too old (see Wait Timeout section). This error cannot generally be rescued from inside a Rails controller action as it happens before the request has a chance to enter Rails.
 
     This shouldn't be different for other frameworks, unless you have something above Rack::Timeout in the middleware stack, which you generally shouldn't.
@@ -323,5 +313,5 @@ This version of Rack::Timeout is compatible with Ruby 2.1 and up, and, for Rails
 
 
 ---
-Copyright © 2010-2016 Caio Chassot, released under the MIT license  
+Copyright © 2010-2016 Caio Chassot, released under the MIT license
 <http://github.com/heroku/rack-timeout>
