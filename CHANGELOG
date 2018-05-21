@@ -1,3 +1,7 @@
+0.5.0.1
+=======
+- Fix 0600 permissions in gem pushed to rubygems
+
 0.5.0
 =====
 

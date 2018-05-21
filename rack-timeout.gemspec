@@ -2,7 +2,7 @@ Gem::Specification.new do |spec|
   spec.name        = "rack-timeout"
   spec.summary     = "Abort requests that are taking too long"
   spec.description = "Rack middleware which aborts requests that have been running for longer than a specified timeout."
-  spec.version     = "0.5.0"
+  spec.version     = "0.5.0.1"
   spec.homepage    = "http://github.com/heroku/rack-timeout"
   spec.author      = "Caio Chassot"
   spec.email       = "caio@heroku.com"
