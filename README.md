@@ -98,9 +98,9 @@ Further Documentation
 
 Please see the [doc](doc) folder for further documentation on:
 
-* [Risks and shortcomings of using Rack Timeout](doc/risks.md)
+* [Risks and shortcomings of using Rack::Timeout](doc/risks.md)
 * [Understanding the request lifecycle](doc/request-lifecycle.md)
-* [Exceptions raised by Rack Timeout](doc/exceptions.md)
+* [Exceptions raised by Rack::Timeout](doc/exceptions.md)
 * [Rollbar fingerprinting](doc/rollbar.md)
 * [Observers](doc/observers.md)
 * [Logging](doc/logging.md)

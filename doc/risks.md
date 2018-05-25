@@ -1,5 +1,5 @@
-Risks and shortcomings of using Rack Timeout
---------------------------------------------
+Risks and shortcomings of using Rack::Timeout
+---------------------------------------------
 
 ### Timing Out During IO Blocks
 

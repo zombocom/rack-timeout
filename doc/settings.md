@@ -1,6 +1,6 @@
 # Settings
 
-Rack Timeout has 4 settings, each of which impacts when Rack Timeout
+Rack::Timeout has 4 settings, each of which impacts when Rack::Timeout
 will raise an exception, and which type of exception will be raised.
 
 ### Service Timeout
