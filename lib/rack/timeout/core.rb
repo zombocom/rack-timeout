@@ -147,8 +147,9 @@ module Rack
     # This is a code extraction for readability, this method is only called from a single point.
     RX_NGINX_X_REQUEST_START  = /^(?:t=)?(\d+)\.(\d{3})$/
     RX_HEROKU_X_REQUEST_START = /^(\d+)$/
+    HTTP_X_REQUEST_START = "HTTP_X_REQUEST_START".freeze
     def self._read_x_request_start(env)
-      return unless s = env["HTTP_X_REQUEST_START"]
+      return unless s = env[HTTP_X_REQUEST_START]
       return unless m = s.match(RX_HEROKU_X_REQUEST_START) || s.match(RX_NGINX_X_REQUEST_START)
       Time.at(m[1,2].join.to_f / 1000)
     end
