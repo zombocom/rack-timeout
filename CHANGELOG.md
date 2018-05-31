@@ -1,3 +1,8 @@
+0.5.1
+=====
+- Fixes setting ENV vars to false or 0 would not disable a timeout
+  (#133)
+
 0.5.0.1
 =======
 - Fix 0600 permissions in gem pushed to rubygems
