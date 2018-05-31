@@ -26,4 +26,21 @@ class RackTimeoutTest < Test::Unit::TestCase
       end
     end
   end
+
+  # runs the test with the given environment, but doesnt restore the original
+  # environment afterwards. This should be sufficient for rack-timeout testing.
+  def with_env(hash)
+    hash.each_pair do |k, v|
+      ENV[k.to_s] = v.to_s
+    end
+    yield
+    hash.each_key do |k|
+      ENV[k.to_s] = nil
+    end
+  end
+
+  def time_in_msec(t = Time.now)
+    "#{t.tv_sec}#{t.tv_usec/1000}"
+  end
+
 end
