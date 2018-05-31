@@ -49,7 +49,7 @@ module Rack
     # helper methods to read timeout properties. Ensure they're always positive numbers or false. When set to false (or 0), their behaviour is disabled.
     def read_timeout_property value, default
       case value
-      when nil   ; default
+      when nil   ; read_timeout_property default, default
       when false ; false
       when 0     ; false
       else
