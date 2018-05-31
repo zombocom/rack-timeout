@@ -1,22 +1,9 @@
-require "test/unit"
-require "rack/test"
-require "rack-timeout"
+require "test_helper"
 
-class BasicTest < Test::Unit::TestCase
-  include Rack::Test::Methods
-
-  def app
-    Rack::Builder.new do
-      use Rack::Timeout, service_timeout: 1
-
-      map "/" do
-        run lambda { |env| [200, {'Content-Type' => 'text/plain'}, ['OK']] }
-      end
-
-      map "/sleep" do
-        run lambda { |env| sleep }
-      end
-    end
+class BasicTest < RackTimeoutTest
+  def initialize(*args)
+    self.settings = { service_timeout: 1 }
+    super(*args)
   end
 
   def test_ok
