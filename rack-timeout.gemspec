@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.homepage    = "http://github.com/heroku/rack-timeout"
   spec.author      = "Caio Chassot"
   spec.email       = "caio@heroku.com"
-  spec.files       = Dir[*%w( MIT-LICENSE CHANGELOG README.markdown lib/**/* doc/**/* )]
+  spec.files       = Dir[*%w( MIT-LICENSE CHANGELOG.md UPGRADING.md README.md lib/**/* doc/**/* )]
   spec.license     = "MIT"
 
   spec.test_files = Dir.glob("test/**/*").concat([
