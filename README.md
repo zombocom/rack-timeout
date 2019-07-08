@@ -81,6 +81,7 @@ service_timeout:   15     # RACK_TIMEOUT_SERVICE_TIMEOUT
 wait_timeout:      30     # RACK_TIMEOUT_WAIT_TIMEOUT
 wait_overtime:     60     # RACK_TIMEOUT_WAIT_OVERTIME
 service_past_wait: false  # RACK_TIMEOUT_SERVICE_PAST_WAIT
+report_only:       false  # RACK_TIMEOUT_REPORT_ONLY
 ```
 
 These settings can be overriden during middleware initialization or

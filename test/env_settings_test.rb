@@ -17,4 +17,11 @@ class EnvSettingsTest < RackTimeoutTest
     end
   end
 
+  def test_report_only
+    with_env(RACK_TIMEOUT_WAIT_TIMEOUT: 15, RACK_TIMEOUT_REPORT_ONLY: 'true') do
+      get "/", "", 'HTTP_X_REQUEST_START' => time_in_msec(Time.now - 100)
+      assert last_response.ok?
+    end
+  end
+
 end

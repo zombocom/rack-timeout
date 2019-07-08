@@ -62,13 +62,15 @@ module Rack
       :service_timeout,   # How long the application can take to complete handling the request once it's passed down to it.
       :wait_timeout,      # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
       :wait_overtime,     # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
-      :service_past_wait  # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
+      :service_past_wait, # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
+      :report_only        # when false, an exception will be raised when a timeout occurs. when true, don't raise an error but still call the logging observers.
 
-    def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:"not_specified")
+    def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:"not_specified", report_only:"not_specified")
       @service_timeout   = read_timeout_property service_timeout, ENV.fetch("RACK_TIMEOUT_SERVICE_TIMEOUT", 15).to_i
       @wait_timeout      = read_timeout_property wait_timeout,    ENV.fetch("RACK_TIMEOUT_WAIT_TIMEOUT", 30).to_i
       @wait_overtime     = read_timeout_property wait_overtime,   ENV.fetch("RACK_TIMEOUT_WAIT_OVERTIME", 60).to_i
       @service_past_wait = service_past_wait == "not_specified" ? ENV.fetch("RACK_TIMEOUT_SERVICE_PAST_WAIT", false).to_s != "false" : service_past_wait
+      @report_only       = report_only == "not_specified" ? ENV.fetch("RACK_TIMEOUT_REPORT_ONLY", false).to_s != "false" : report_only
       @app = app
     end
 
@@ -93,7 +95,7 @@ module Rack
         info.wait, info.timeout = seconds_waited, final_wait_timeout       # updating the info properties; info.timeout will be the wait timeout at this point
         if seconds_service_left <= 0 # expire requests that have waited for too long in the queue (as they are assumed to have been dropped by the web server / routing layer at this point)
           RT._set_state! env, :expired
-          raise RequestExpiryError.new(env), "Request older than #{info.ms(:timeout)}."
+          raise RequestExpiryError.new(env), "Request older than #{info.ms(:timeout)}." unless report_only
         end
       end
 
@@ -116,7 +118,7 @@ module Rack
 
       timeout = RT::Scheduler::Timeout.new do |app_thread|  # creates a timeout instance responsible for timing out the request. the given block runs if timed out
         register_state_change.call :timed_out
-        app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
+        app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}") unless report_only
       end
 
       response = timeout.timeout(info.timeout) do           # perform request with timeout

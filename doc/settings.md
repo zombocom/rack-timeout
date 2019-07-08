@@ -1,6 +1,6 @@
 # Settings
 
-Rack::Timeout has 4 settings, each of which impacts when Rack::Timeout
+Rack::Timeout has 5 settings, each of which impacts when Rack::Timeout
 will raise an exception, and which type of exception will be raised.
 
 ### Service Timeout
@@ -47,3 +47,7 @@ This extra time is called *wait overtime* and can be set via `wait_overtime`. It
 Keep in mind that Heroku [recommends][uploads] uploading large files directly to S3, so as to prevent the dyno from being blocked for too long and hence unable to handle further incoming requests.
 
 [uploads]: https://devcenter.heroku.com/articles/s3#file-uploads
+
+### Report Only
+
+When `report_only` is set to `true` no exceptions will be raised and the request will continue to run (state changes will still be logged and obervers will still be called).

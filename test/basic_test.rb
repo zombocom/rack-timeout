@@ -20,4 +20,10 @@ class BasicTest < RackTimeoutTest
       get "/", "", 'HTTP_X_REQUEST_START' => time_in_msec(Time.now - 100)
     end
   end
+
+  def test_report_only
+    self.settings = { wait_timeout: 15, report_only: true }
+    get "/", "", 'HTTP_X_REQUEST_START' => time_in_msec(Time.now - 100)
+    assert last_response.ok?
+  end
 end
