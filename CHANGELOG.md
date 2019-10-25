@@ -1,3 +1,7 @@
+0.5.2
+=====
+- Rails 6 support (#147)
+
 0.5.1
 =====
 - Fixes setting ENV vars to false or 0 would not disable a timeout
