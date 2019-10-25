@@ -1,8 +1,10 @@
+RACK_TIMEOUT_VERSION = "0.5.1"
+
 Gem::Specification.new do |spec|
   spec.name        = "rack-timeout"
   spec.summary     = "Abort requests that are taking too long"
   spec.description = "Rack middleware which aborts requests that have been running for longer than a specified timeout."
-  spec.version     = "0.5.1"
+  spec.version     = RACK_TIMEOUT_VERSION
   spec.homepage    = "https://github.com/sharpstone/rack-timeout"
   spec.author      = "Caio Chassot"
   spec.email       = "caio@heroku.com"
@@ -10,8 +12,8 @@ Gem::Specification.new do |spec|
   spec.license     = "MIT"
   spec.metadata = {
     "bug_tracker_uri"   => "https://github.com/sharpstone/rack-timeout/issues",
-    "changelog_uri"     => "https://github.com/sharpstone/rack-timeout/blob/v0.5.1/CHANGELOG.md",
-    "documentation_uri" => "https://rubydoc.info/gems/rack-timeout/0.5.1/",
+    "changelog_uri"     => "https://github.com/sharpstone/rack-timeout/blob/v#{RACK_TIMEOUT_VERSION}/CHANGELOG.md",
+    "documentation_uri" => "https://rubydoc.info/gems/rack-timeout/#{RACK_TIMEOUT_VERSION}/",
     "source_code_uri"   => "https://github.com/sharpstone/rack-timeout"
 }
 
