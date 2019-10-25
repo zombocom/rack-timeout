@@ -8,6 +8,12 @@ Gem::Specification.new do |spec|
   spec.email       = "caio@heroku.com"
   spec.files       = Dir[*%w( MIT-LICENSE CHANGELOG.md UPGRADING.md README.md lib/**/* doc/**/* )]
   spec.license     = "MIT"
+  spec.metadata = {
+    "bug_tracker_uri"   => "https://github.com/sharpstone/rack-timeout/issues",
+    "changelog_uri"     => "https://github.com/sharpstone/rack-timeout/blob/v0.5.1/CHANGELOG.md",
+    "documentation_uri" => "https://rubydoc.info/gems/rack-timeout/0.5.1/",
+    "source_code_uri"   => "https://github.com/sharpstone/rack-timeout"
+}
 
   spec.test_files = Dir.glob("test/**/*").concat([
     "Gemfile",
