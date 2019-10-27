@@ -47,7 +47,7 @@ stack `Rack::Timeout` gets inserted.
 
 ```ruby
 # Gemfile
-gem "rack-timeout", require:"rack/timeout/base"
+gem "rack-timeout", require: "rack/timeout/base"
 ```
 
 ```ruby
