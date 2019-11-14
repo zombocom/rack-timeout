@@ -47,3 +47,38 @@ This extra time is called *wait overtime* and can be set via `wait_overtime`. It
 Keep in mind that Heroku [recommends][uploads] uploading large files directly to S3, so as to prevent the dyno from being blocked for too long and hence unable to handle further incoming requests.
 
 [uploads]: https://devcenter.heroku.com/articles/s3#file-uploads
+
+### Term on Timeout
+
+If your application timeouts fire frequently then [they can be put into a bad state](https://www.schneems.com/2017/02/21/the-oldest-bug-in-ruby-why-racktimeout-might-hose-your-server/). One option for resetting that state is to restart the entire process. If you are running in an environment with multiple processes (such as `puma -w 2`) then when a process is sent a `SIGTERM` it will exit. The webserver then knows how to restart the process. For more information on process restart behavior see:
+
+- [Ruby Application Restart Behavior](https://devcenter.heroku.com/articles/what-happens-to-ruby-apps-when-they-are-restarted)
+- [License to SIGKILL](https://www.sitepoint.com/license-to-sigkill/)
+
+To enable this behavior you can set `term_on_timeout: 1` to an integer. If you set it to zero or one then the first time the process encounters a timeout, it will receive a SIGTERM. If you set to a higher value such as `5` then rack-timeout will wait until the process has experienced five timeouts before restarting the process. Setting this to a higher number means the application restarts processes less frequently, so throughput will be less impacted. If you set it to too high of a number, then the underlying issue of the application being put into a bad state will not be effectively mitigated.
+
+To enable on Heroku run:
+
+```
+$ heroku config:set RACK_TIMEOUT_TERM_ON_TIMEOUT=1
+```
+
+**Caution** If you use this setting inside of a webserver without enabling multi-process mode, then it will exit the entire server when it fires:
+
+- ✅ `puma -w 2 -t 5` This is OKAY
+- ❌ `puma -t 5` This is NOT OKAY
+
+If you're using a `config/puma.rb` file then make sure you are calling `workers` configuration DSL. You should see multiple workers when the server boots:
+
+```
+[3922] Puma starting in cluster mode...
+[3922] * Version 4.3.0 (ruby 2.6.5-p114), codename: Mysterious Traveller
+[3922] * Min threads: 0, max threads: 16
+[3922] * Environment: development
+[3922] * Process workers: 2
+[3922] * Phased restart available
+[3922] * Listening on tcp://0.0.0.0:9292
+[3922] Use Ctrl-C to stop
+[3922] - Worker 0 (pid: 3924) booted, phase: 0
+[3922] - Worker 1 (pid: 3925) booted, phase: 0
+```

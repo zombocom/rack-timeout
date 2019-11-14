@@ -30,6 +30,7 @@ module Rack
       :service,   # time rack spent processing the request (updated ~ every second)
       :timeout,   # the actual computed timeout to be used for this request
       :state,     # the request's current state, see VALID_STATES below
+      :term,
     ) {
       def ms(k)   # helper method used for formatting values in milliseconds
         "%.fms" % (self[k] * 1000) if self[k]
@@ -52,6 +53,8 @@ module Rack
       when nil   ; read_timeout_property default, default
       when false ; false
       when 0     ; false
+      when String
+        read_timeout_property value.to_i, default
       else
         value.is_a?(Numeric) && value > 0 or raise ArgumentError, "value #{value.inspect} should be false, zero, or a positive number."
         value
@@ -62,13 +65,21 @@ module Rack
       :service_timeout,   # How long the application can take to complete handling the request once it's passed down to it.
       :wait_timeout,      # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
       :wait_overtime,     # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
-      :service_past_wait  # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
+      :service_past_wait, # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
+      :term_on_timeout
 
-    def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:"not_specified")
+    def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:"not_specified", term_on_timeout: nil)
+      @term_on_timeout   = read_timeout_property term_on_timeout, ENV.fetch("RACK_TIMEOUT_TERM_ON_TIMEOUT", false)
       @service_timeout   = read_timeout_property service_timeout, ENV.fetch("RACK_TIMEOUT_SERVICE_TIMEOUT", 15).to_i
       @wait_timeout      = read_timeout_property wait_timeout,    ENV.fetch("RACK_TIMEOUT_WAIT_TIMEOUT", 30).to_i
       @wait_overtime     = read_timeout_property wait_overtime,   ENV.fetch("RACK_TIMEOUT_WAIT_OVERTIME", 60).to_i
       @service_past_wait = service_past_wait == "not_specified" ? ENV.fetch("RACK_TIMEOUT_SERVICE_PAST_WAIT", false).to_s != "false" : service_past_wait
+
+      Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
+      if @term_on_timeout
+        raise "term_on_timeout must be an integer but is #{@term_on_timeout.class}: #{@term_on_timeout}" unless @term_on_timeout.is_a?(Numeric)
+        raise "Current Runtime does not support processes" unless ::Process.respond_to?(:fork)
+      end
       @app = app
     end
 
@@ -92,6 +103,7 @@ module Rack
         seconds_service_left    = final_wait_timeout - seconds_waited      # first calculation of service timeout (relevant if request doesn't get expired, may be overriden later)
         info.wait               = seconds_waited                           # updating the info properties; info.timeout will be the wait timeout at this point
         info.timeout            = final_wait_timeout
+
         if seconds_service_left <= 0 # expire requests that have waited for too long in the queue (as they are assumed to have been dropped by the web server / routing layer at this point)
           RT._set_state! env, :expired
           raise RequestExpiryError.new(env), "Request older than #{info.ms(:timeout)}."
@@ -104,7 +116,7 @@ module Rack
       # compute actual timeout to be used for this request; if service_past_wait is true, this is just service_timeout. If false (the default), and wait time was determined, we'll use the shortest value between seconds_service_left and service_timeout. See comment above at service_past_wait for justification.
       info.timeout = service_timeout # nice and simple, when service_past_wait is true, not so much otherwise:
       info.timeout = seconds_service_left if !service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < service_timeout
-
+      info.term    = term_on_timeout
       RT._set_state! env, :ready                            # we're good to go, but have done nothing yet
 
       heartbeat_event = nil                                 # init var so it's in scope for following proc
@@ -117,7 +129,22 @@ module Rack
 
       timeout = RT::Scheduler::Timeout.new do |app_thread|  # creates a timeout instance responsible for timing out the request. the given block runs if timed out
         register_state_change.call :timed_out
-        app_thread.raise(RequestTimeoutException.new(env), "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
+
+        message = "Request "
+        message << "waited #{info.ms(:wait)}, then " if info.wait
+        message << "ran for longer than #{info.ms(:timeout)} "
+        if term_on_timeout
+          Thread.main['RACK_TIMEOUT_COUNT'] += 1
+
+          if Thread.main['RACK_TIMEOUT_COUNT'] >= @term_on_timeout
+            message << ", sending SIGTERM to process #{Process.pid}"
+            Process.kill("SIGTERM", Process.pid)
+          else
+            message << ", #{Thread.main['RACK_TIMEOUT_COUNT']}/#{term_on_timeout} timeouts allowed before SIGTERM for process #{Process.pid}"
+          end
+        end
+
+        app_thread.raise(RequestTimeoutException.new(env), message)
       end
 
       response = timeout.timeout(info.timeout) do           # perform request with timeout

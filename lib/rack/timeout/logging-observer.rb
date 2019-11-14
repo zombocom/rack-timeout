@@ -48,6 +48,7 @@ class Rack::Timeout::StateChangeLoggingObserver
       s << " wait="    << info.ms(:wait)    if info.wait
       s << " timeout=" << info.ms(:timeout) if info.timeout
       s << " service=" << info.ms(:service) if info.service
+      s << " term_on_timeout=" << info.term.to_s if info.term
       s << " state="   << info.state.to_s   if info.state
       s
     end
