@@ -90,7 +90,8 @@ module Rack
         seconds_waited          = 0 if seconds_waited < 0                  # make up for potential time drift between the routing server and the application server
         final_wait_timeout      = wait_timeout + effective_overtime        # how long the request will be allowed to have waited
         seconds_service_left    = final_wait_timeout - seconds_waited      # first calculation of service timeout (relevant if request doesn't get expired, may be overriden later)
-        info.wait, info.timeout = seconds_waited, final_wait_timeout       # updating the info properties; info.timeout will be the wait timeout at this point
+        info.wait               = seconds_waited                           # updating the info properties; info.timeout will be the wait timeout at this point
+        info.timeout            = final_wait_timeout
         if seconds_service_left <= 0 # expire requests that have waited for too long in the queue (as they are assumed to have been dropped by the web server / routing layer at this point)
           RT._set_state! env, :expired
           raise RequestExpiryError.new(env), "Request older than #{info.ms(:timeout)}."
