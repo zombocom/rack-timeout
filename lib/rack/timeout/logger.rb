@@ -35,5 +35,4 @@ module Rack::Timeout::Logger
     @level      = new_level  || ::Logger::INFO
     self.logger = ::Rack::Timeout::StateChangeLoggingObserver.mk_logger(device, level)
   end
-
 end

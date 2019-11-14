@@ -191,6 +191,5 @@ module Rack
     def self.notify_state_change_observers(env)
       @state_change_observers.values.each { |observer| observer.call(env) }
     end
-
   end
 end

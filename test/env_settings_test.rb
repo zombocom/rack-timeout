@@ -16,5 +16,4 @@ class EnvSettingsTest < RackTimeoutTest
       assert last_response.ok?
     end
   end
-
 end

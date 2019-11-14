@@ -42,5 +42,4 @@ class RackTimeoutTest < Test::Unit::TestCase
   def time_in_msec(t = Time.now)
     "#{t.tv_sec}#{t.tv_usec/1000}"
   end
-
 end

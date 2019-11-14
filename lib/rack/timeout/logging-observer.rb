@@ -52,5 +52,4 @@ class Rack::Timeout::StateChangeLoggingObserver
       s
     end
   end
-
 end

@@ -25,5 +25,4 @@ module Rack::Timeout::MonotonicTime
   when RUBY_PLATFORM == "java"           ; alias fsecs fsecs_java
   else                                   ; alias fsecs fsecs_ruby
   end
-
 end
