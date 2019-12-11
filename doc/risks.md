@@ -26,7 +26,6 @@ That said, it's something to be aware of, and may explain some eerie wonkiness s
 [broken-timeout]: http://headius.blogspot.de/2008/02/rubys-threadraise-threadkill-timeoutrb.html
 [handle-interrupt]: http://www.ruby-doc.org/core-2.1.3/Thread.html#method-c-handle_interrupt
 
-
 ### Time Out Early and Often
 
 Because of the aforementioned issues, it's recommended you set library-specific timeouts and leave Rack::Timeout as a last resort measure. Library timeouts will generally take care of IO issues and abort the operation safely. See [The Ultimate Guide to Ruby Timeouts][ruby-timeouts].
