@@ -1,3 +1,7 @@
+## 0.6.0
+
+- Allow sending SIGTERM to workers on timeout (https://github.com/sharpstone/rack-timeout/pull/157)
+
 0.5.2
 =====
 - Rails 6 support (#147)
