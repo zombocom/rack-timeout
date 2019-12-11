@@ -55,7 +55,7 @@ gem "rack-timeout", require: "rack/timeout/base"
 
 # insert middleware wherever you want in the stack, optionally pass
 # initialization arguments, or use environment variables
-Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout, service_timeout: 5
+Rails.application.config.middleware.insert_before Rack::Runtime, Rack::Timeout, service_timeout: 15
 ```
 
 ### Sinatra and other Rack apps
@@ -67,7 +67,7 @@ require "rack-timeout"
 # Call as early as possible so rack-timeout runs before all other middleware.
 # Setting service_timeout or `RACK_TIMEOUT_SERVICE_TIMEOUT` environment
 # variable is recommended. If omitted, defaults to 15 seconds.
-use Rack::Timeout, service_timeout: 5
+use Rack::Timeout, service_timeout: 15
 ```
 
 Configuring
@@ -89,7 +89,7 @@ environment variables `RACK_TIMEOUT_*` mentioned above. Middleware
 parameters take precedence:
 
 ```ruby
-use Rack::Timeout, service_timeout: 5, wait_timeout: false
+use Rack::Timeout, service_timeout: 15, wait_timeout: 30
 ```
 
 For more on these settings, please see [doc/settings](doc/settings.md).
