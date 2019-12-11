@@ -1,3 +1,7 @@
+## 0.6.1
+
+- RACK_TIMEOUT_TERM_ON_TIMEOUT can be set to zero to disable (https://github.com/sharpstone/rack-timeout/pull/161)
+
 ## 0.6.0
 
 - Allow sending SIGTERM to workers on timeout (https://github.com/sharpstone/rack-timeout/pull/157)

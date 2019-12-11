@@ -59,7 +59,7 @@ If your application timeouts fire frequently then [they can cause your applicati
 
 After the worker process exists will Puma's parent process know to boot a replacement worker. While one process is restarting, another can still serve requests (if you have more than 1 worker process per server/dyno). Between when a process exits and when a new process boots, there will be a reduction in throughput. If all processes are restarting, then incoming requests will be blocked while new processes boot.
 
-**How to enable** To enable this behavior you can set `term_on_timeout: 1` to an integer value. If you set it to zero or one, then the first time the process encounters a timeout, it will receive a SIGTERM.
+**How to enable** To enable this behavior you can set `term_on_timeout: 1` to an integer value. If you set it to one, then the first time the process encounters a timeout, it will receive a SIGTERM.
 
 To enable on Heroku run:
 
