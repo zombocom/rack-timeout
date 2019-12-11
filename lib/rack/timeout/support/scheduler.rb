@@ -151,5 +151,4 @@ class Rack::Timeout::Scheduler
   instance_methods(false).each do |m|
     define_singleton_method(m) { |*a, &b| singleton.send(m, *a, &b) }
   end
-
 end

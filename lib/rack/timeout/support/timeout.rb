@@ -25,5 +25,4 @@ class Rack::Timeout::Scheduler::Timeout
   def self.timeout(secs, &block)
     (@singleton ||= new).timeout(secs, &block)
   end
-
 end

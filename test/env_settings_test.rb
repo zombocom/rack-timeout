@@ -17,4 +17,11 @@ class EnvSettingsTest < RackTimeoutTest
     end
   end
 
+  def test_term
+    with_env(RACK_TIMEOUT_TERM_ON_TIMEOUT: 1) do
+      assert_raises(SignalException) do
+        get "/sleep"
+      end
+    end
+  end
 end
