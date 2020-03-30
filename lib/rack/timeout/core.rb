@@ -53,8 +53,6 @@ module Rack
       when nil   ; read_timeout_property default, default
       when false ; false
       when 0     ; false
-      when String
-        read_timeout_property value.to_i, default
       else
         value.is_a?(Numeric) && value > 0 or raise ArgumentError, "value #{value.inspect} should be false, zero, or a positive number."
         value
@@ -69,7 +67,7 @@ module Rack
       :term_on_timeout
 
     def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:"not_specified", term_on_timeout: nil)
-      @term_on_timeout   = read_timeout_property term_on_timeout, ENV.fetch("RACK_TIMEOUT_TERM_ON_TIMEOUT", false)
+      @term_on_timeout   = read_timeout_property term_on_timeout, ENV.fetch("RACK_TIMEOUT_TERM_ON_TIMEOUT", 0).to_i
       @service_timeout   = read_timeout_property service_timeout, ENV.fetch("RACK_TIMEOUT_SERVICE_TIMEOUT", 15).to_i
       @wait_timeout      = read_timeout_property wait_timeout,    ENV.fetch("RACK_TIMEOUT_WAIT_TIMEOUT", 30).to_i
       @wait_overtime     = read_timeout_property wait_overtime,   ENV.fetch("RACK_TIMEOUT_WAIT_OVERTIME", 60).to_i
@@ -77,7 +75,6 @@ module Rack
 
       Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
       if @term_on_timeout
-        raise "term_on_timeout must be an integer but is #{@term_on_timeout.class}: #{@term_on_timeout}" unless @term_on_timeout.is_a?(Numeric)
         raise "Current Runtime does not support processes" unless ::Process.respond_to?(:fork)
       end
       @app = app
