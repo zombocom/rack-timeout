@@ -114,5 +114,5 @@ for Rails apps, Rails 3.x and up.
 
 
 ---
-Copyright © 2010-2016 Caio Chassot, released under the MIT license
-<http://github.com/heroku/rack-timeout>
+Copyright © 2010-2020 Caio Chassot, released under the MIT license
+<http://github.com/sharpstone/rack-timeout>
