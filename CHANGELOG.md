@@ -5,6 +5,10 @@
 ## 0.6.0
 
 - Allow sending SIGTERM to workers on timeout (https://github.com/sharpstone/rack-timeout/pull/157)
+- Add support to configure `Rack::Timeout` using strings ([#157], [#165])
+
+[#157]: https://github.com/sharpstone/rack-timeout/pull/157
+[#165]: https://github.com/sharpstone/rack-timeout/pull/165
 
 0.5.2
 =====

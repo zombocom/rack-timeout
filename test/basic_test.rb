@@ -7,6 +7,12 @@ class BasicTest < RackTimeoutTest
     assert last_response.ok?
   end
 
+  def test_settings_with_strings
+    self.settings = { service_timeout: "1" }
+    get "/"
+    assert last_response.ok?
+  end
+
   def test_timeout
     self.settings = { service_timeout: 1 }
     assert_raises(Rack::Timeout::RequestTimeoutError) do

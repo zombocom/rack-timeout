@@ -53,6 +53,8 @@ module Rack
       when nil   ; read_timeout_property default, default
       when false ; false
       when 0     ; false
+      when String
+        read_timeout_property value.to_i, default
       else
         value.is_a?(Numeric) && value > 0 or raise ArgumentError, "value #{value.inspect} should be false, zero, or a positive number."
         value
