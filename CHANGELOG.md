@@ -1,3 +1,7 @@
+## Unreleased
+
+- CI: Add a GitHub build matrix [PR 161](https://github.com/sharpstone/rack-timeout/pull/172)
+
 ## 0.6.1
 
 - RACK_TIMEOUT_TERM_ON_TIMEOUT can be set to zero to disable (https://github.com/sharpstone/rack-timeout/pull/161)
