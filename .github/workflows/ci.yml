@@ -1,6 +1,6 @@
 name: CI
 
-on: [ push pull_request ]
+on: [ push, pull_request ]
   # If we want only to run it upon merge:
   # push: [ $default-branch ]
   # pull_request: [ $default-branch ]
