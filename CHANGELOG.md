@@ -1,6 +1,7 @@
 ## 0.6.1
 
 - RACK_TIMEOUT_TERM_ON_TIMEOUT can be set to zero to disable (https://github.com/sharpstone/rack-timeout/pull/161)
+- env[ENV_SERVICE_TIMEOUT_KEY] can be set which enables each individual request to customize its own service_timeout value dynamically (https://github.com/sharpstone/rack-timeout/pull/174)
 
 ## 0.6.0
 
