@@ -32,7 +32,7 @@ class Rack::Timeout::StateChangeLoggingObserver
 
   def logger(env = nil)
     @logger ||
-      (defined?(::Rails) && ::Rails.logger) ||
+      (defined?(::Rails) && ::Rails.respond_to?(:logger) && ::Rails.logger) ||
       (env && !env["rack.logger"].is_a?(::Rack::NullLogger) && env["rack.logger"]) ||
       (env && env["rack.errors"] && self.class.mk_logger(env["rack.errors"]))      ||
       (@fallback_logger ||= self.class.mk_logger($stderr))
