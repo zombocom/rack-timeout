@@ -15,7 +15,7 @@ class RackTimeoutTest < Test::Unit::TestCase
   def app
     settings = self.settings
     Rack::Builder.new do
-      use Rack::Timeout, settings
+      use Rack::Timeout, **settings
 
       map "/" do
         run lambda { |env| [200, {'Content-Type' => 'text/plain'}, ['OK']] }

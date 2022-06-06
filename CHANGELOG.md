@@ -1,6 +1,11 @@
+## HEAD (unreleased)
+
+- Migrate CI from Travis CI to GitHub Actions (https://github.com/zombocom/rack-timeout/pull/182)
+
 ## 0.6.1
 
 - RACK_TIMEOUT_TERM_ON_TIMEOUT can be set to zero to disable (https://github.com/sharpstone/rack-timeout/pull/161)
+- Update the gemspec's homepage to the current repo URL(https://github.com/zombocom/rack-timeout/pull/183)
 
 ## 0.6.0
 
