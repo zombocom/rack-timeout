@@ -1,3 +1,7 @@
+## 0.6.2
+
+- Fix `NoMethodError: undefined method 'logger' for Rails:Module` when Rails is defined as a Module, but is not a full Rails app (https://github.com/zombocom/rack-timeout/pull/180)
+
 ## 0.6.1
 
 - RACK_TIMEOUT_TERM_ON_TIMEOUT can be set to zero to disable (https://github.com/sharpstone/rack-timeout/pull/161)
