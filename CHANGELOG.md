@@ -1,10 +1,16 @@
-## 0.6.2
+## HEAD (unreleased)
 
 - Fix `NoMethodError: undefined method 'logger' for Rails:Module` when Rails is defined as a Module, but is not a full Rails app (https://github.com/zombocom/rack-timeout/pull/180)
+
+## 0.6.2
+
+- Migrate CI from Travis CI to GitHub Actions (https://github.com/zombocom/rack-timeout/pull/182)
+- Rails 7+ support (https://github.com/zombocom/rack-timeout/pull/184)
 
 ## 0.6.1
 
 - RACK_TIMEOUT_TERM_ON_TIMEOUT can be set to zero to disable (https://github.com/sharpstone/rack-timeout/pull/161)
+- Update the gemspec's homepage to the current repo URL(https://github.com/zombocom/rack-timeout/pull/183)
 
 ## 0.6.0
 
