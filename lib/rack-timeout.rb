@@ -1,2 +1,2 @@
 require_relative "rack/timeout/base"
-require_relative "rack/timeout/rails" if defined?(Rails) && Rails::VERSION::MAJOR >= 3
+require_relative "rack/timeout/rails" if defined?(Rails) && [3,4,5,6,7].include?(Rails::VERSION::MAJOR)
