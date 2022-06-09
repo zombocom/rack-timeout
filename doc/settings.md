@@ -3,6 +3,9 @@
 Rack::Timeout has 4 settings, each of which impacts when Rack::Timeout
 will raise an exception, and which type of exception will be raised.
 
+
+Additionally there is a [demo app](https://github.com/zombocom/rack_timeout_demos) that shows the impact of changing settings and how the library behaves when a timeout is hit.
+
 ### Service Timeout
 
 `service_timeout` is the most important setting.
