@@ -104,7 +104,10 @@ Please see the [doc](doc) folder for further documentation on:
 * [Exceptions raised by Rack::Timeout](doc/exceptions.md)
 * [Rollbar fingerprinting](doc/rollbar.md)
 * [Observers](doc/observers.md)
+* [Settings](doc/settings.md)
 * [Logging](doc/logging.md)
+
+Additionally there is a [demo app](https://github.com/zombocom/rack_timeout_demos) that shows the impact of changing settings and how the library behaves when a timeout is hit.
 
 Compatibility
 -------------
