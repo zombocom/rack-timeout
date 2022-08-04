@@ -74,8 +74,15 @@ module Rack
       @service_past_wait = service_past_wait == "not_specified" ? ENV.fetch("RACK_TIMEOUT_SERVICE_PAST_WAIT", false).to_s != "false" : service_past_wait
 
       Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
-      if @term_on_timeout
-        raise "Current Runtime does not support processes" unless ::Process.respond_to?(:fork)
+      if @term_on_timeout && !::Process.respond_to?(:fork)
+        raise(NotImplementedError, <<-MSG)
+Current Runtime does not support processes. 
+This probably means that the platform is Windows.
+
+To avoid this error, either specify RACK_TIMEOUT_TERM_ON_TIMEOUT=0 or 
+leave it as default (which will have the same result).
+
+MSG
       end
       @app = app
     end
