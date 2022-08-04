@@ -27,5 +27,13 @@ class EnvSettingsTest < RackTimeoutTest
         end
       end
     end
+  else
+    def test_service_timeout # Confirm that on Windows we raise an exception when someone attempts to use term on timeout
+      with_env(RACK_TIMEOUT_TERM_ON_TIMEOUT: 1) do 
+        assert_raises(NotImplementedError) do
+          get "/"
+        end
+      end
+    end
   end
 end
