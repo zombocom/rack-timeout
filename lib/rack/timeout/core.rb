@@ -76,8 +76,7 @@ module Rack
       Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
       if @term_on_timeout && !::Process.respond_to?(:fork)
         raise(NotImplementedError, <<-MSG)
-Current Runtime does not support processes. 
-This probably means that the platform is Windows.
+The platform running your application does not support forking (i.e. Windows, JVM, etc).
 
 To avoid this error, either specify RACK_TIMEOUT_TERM_ON_TIMEOUT=0 or 
 leave it as default (which will have the same result).
