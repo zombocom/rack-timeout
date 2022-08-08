@@ -1,4 +1,5 @@
 ## HEAD (unreleased)
+ - Improve message when Terminate on Timeout is used on a platform that does not support it (eg. Windows or JVM)
 
 ## 0.6.3
 
