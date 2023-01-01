@@ -84,7 +84,7 @@ service_past_wait: false  # RACK_TIMEOUT_SERVICE_PAST_WAIT
 term_on_timeout:   false  # RACK_TIMEOUT_TERM_ON_TIMEOUT
 ```
 
-These settings can be overriden during middleware initialization or
+These settings can be overridden during middleware initialization or
 environment variables `RACK_TIMEOUT_*` mentioned above. Middleware
 parameters take precedence:
 
