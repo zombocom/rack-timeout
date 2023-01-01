@@ -78,7 +78,7 @@ module Rack
         raise(NotImplementedError, <<-MSG)
 The platform running your application does not support forking (i.e. Windows, JVM, etc).
 
-To avoid this error, either specify RACK_TIMEOUT_TERM_ON_TIMEOUT=0 or 
+To avoid this error, either specify RACK_TIMEOUT_TERM_ON_TIMEOUT=0 or
 leave it as default (which will have the same result).
 
 MSG
@@ -103,7 +103,7 @@ MSG
         seconds_waited          = time_started_service - time_started_wait # how long it took between the web server first receiving the request and rack being able to handle it
         seconds_waited          = 0 if seconds_waited < 0                  # make up for potential time drift between the routing server and the application server
         final_wait_timeout      = wait_timeout + effective_overtime        # how long the request will be allowed to have waited
-        seconds_service_left    = final_wait_timeout - seconds_waited      # first calculation of service timeout (relevant if request doesn't get expired, may be overriden later)
+        seconds_service_left    = final_wait_timeout - seconds_waited      # first calculation of service timeout (relevant if request doesn't get expired, may be overridden later)
         info.wait               = seconds_waited                           # updating the info properties; info.timeout will be the wait timeout at this point
         info.timeout            = final_wait_timeout
 

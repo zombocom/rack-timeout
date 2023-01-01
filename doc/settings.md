@@ -58,7 +58,7 @@ If your application timeouts fire frequently then [they can cause your applicati
 - [Ruby Application Restart Behavior](https://devcenter.heroku.com/articles/what-happens-to-ruby-apps-when-they-are-restarted)
 - [License to SIGKILL](https://www.sitepoint.com/license-to-sigkill/)
 
-**Puma SIGTERM behavior** When a Puma worker receives a `SIGTERM` it will begin to shut down, but not exit right away. It stops accepting new requests and waits for any existing requests to finish before fully shutting down. This means that only the request that experiences a timeout will be interupted, all other in-flight requests will be allowed to run until they return or also are timed out.
+**Puma SIGTERM behavior** When a Puma worker receives a `SIGTERM` it will begin to shut down, but not exit right away. It stops accepting new requests and waits for any existing requests to finish before fully shutting down. This means that only the request that experiences a timeout will be interrupted, all other in-flight requests will be allowed to run until they return or also are timed out.
 
 After the worker process exists will Puma's parent process know to boot a replacement worker. While one process is restarting, another can still serve requests (if you have more than 1 worker process per server/dyno). Between when a process exits and when a new process boots, there will be a reduction in throughput. If all processes are restarting, then incoming requests will be blocked while new processes boot.
 
