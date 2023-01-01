@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 require_relative "namespace"
 require_relative "monotonic_time"
 
