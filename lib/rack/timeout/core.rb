@@ -133,7 +133,7 @@ MSG
       timeout = RT::Scheduler::Timeout.new do |app_thread|  # creates a timeout instance responsible for timing out the request. the given block runs if timed out
         register_state_change.call :timed_out
 
-        message = "Request "
+        message = +"Request "
         message << "waited #{info.ms(:wait)}, then " if info.wait
         message << "ran for longer than #{info.ms(:timeout)} "
         if term_on_timeout
