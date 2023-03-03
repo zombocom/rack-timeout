@@ -22,7 +22,16 @@ class RackTimeoutTest < Test::Unit::TestCase
       end
 
       map "/sleep" do
-        run lambda { |env| sleep }
+        app = lambda do |env|
+          seconds = env["QUERY_STRING"].to_i
+          if seconds.zero?
+            sleep
+          else
+            sleep seconds
+            [200, {'Content-Type' => 'text/plain'}, ["slept #{seconds}"]]
+          end
+        end
+        run app
       end
     end
   end
