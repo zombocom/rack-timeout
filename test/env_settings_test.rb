@@ -2,6 +2,13 @@ require 'test_helper'
 
 class EnvSettingsTest < RackTimeoutTest
 
+  def test_dry_run
+    with_env(RACK_TIMEOUT_SERVICE_TIMEOUT: 1, RACK_TIMEOUT_DRY_RUN: 1) do
+      get "/sleep?2"
+      assert last_response.ok?
+      assert_equal "slept 2", last_response.body
+    end
+  end
 
   def test_zero_wait_timeout
     with_env(RACK_TIMEOUT_WAIT_TIMEOUT: 0) do
