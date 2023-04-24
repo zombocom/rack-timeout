@@ -82,16 +82,21 @@ module Rack
       :term_on_timeout
 
     def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:"not_specified", term_on_timeout: nil)
-      @term_on_timeout   = read_timeout_property term_on_timeout, ENV.fetch("RACK_TIMEOUT_TERM_ON_TIMEOUT", false)
+      @term_on_timeout   = read_timeout_property term_on_timeout, ENV.fetch("RACK_TIMEOUT_TERM_ON_TIMEOUT", 0).to_i
       @service_timeout   = read_timeout_property service_timeout, ENV.fetch("RACK_TIMEOUT_SERVICE_TIMEOUT", 15).to_i
       @wait_timeout      = read_timeout_property wait_timeout,    ENV.fetch("RACK_TIMEOUT_WAIT_TIMEOUT", 30).to_i
       @wait_overtime     = read_timeout_property wait_overtime,   ENV.fetch("RACK_TIMEOUT_WAIT_OVERTIME", 60).to_i
       @service_past_wait = service_past_wait == "not_specified" ? ENV.fetch("RACK_TIMEOUT_SERVICE_PAST_WAIT", false).to_s != "false" : service_past_wait
 
       Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
-      if @term_on_timeout
-        raise "term_on_timeout must be an integer but is #{@term_on_timeout.class}: #{@term_on_timeout}" unless @term_on_timeout.is_a?(Numeric)
-        raise "Current Runtime does not support processes" unless ::Process.respond_to?(:fork)
+      if @term_on_timeout && !::Process.respond_to?(:fork)
+        raise(NotImplementedError, <<-MSG)
+The platform running your application does not support forking (i.e. Windows, JVM, etc).
+
+To avoid this error, either specify RACK_TIMEOUT_TERM_ON_TIMEOUT=0 or 
+leave it as default (which will have the same result).
+
+MSG
       end
       @app = app
     end

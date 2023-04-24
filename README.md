@@ -117,7 +117,10 @@ Please see the [doc](doc) folder for further documentation on:
 * [Exceptions raised by Rack::Timeout](doc/exceptions.md)
 * [Rollbar fingerprinting](doc/rollbar.md)
 * [Observers](doc/observers.md)
+* [Settings](doc/settings.md)
 * [Logging](doc/logging.md)
+
+Additionally there is a [demo app](https://github.com/zombocom/rack_timeout_demos) that shows the impact of changing settings and how the library behaves when a timeout is hit.
 
 Compatibility
 -------------
@@ -127,5 +130,5 @@ for Rails apps, Rails 3.x and up.
 
 
 ---
-Copyright © 2010-2016 Caio Chassot, released under the MIT license
-<http://github.com/heroku/rack-timeout>
+Copyright © 2010-2020 Caio Chassot, released under the MIT license
+<http://github.com/sharpstone/rack-timeout>
