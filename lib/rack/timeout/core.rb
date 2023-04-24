@@ -53,11 +53,29 @@ module Rack
       when nil   ; read_timeout_property default, default
       when false ; false
       when 0     ; false
+      when Proc  ; value
       else
         value.is_a?(Numeric) && value > 0 or raise ArgumentError, "value #{value.inspect} should be false, zero, or a positive number."
         value
       end
     end
+
+    # New helper: if +value+ is a Proc, then it will be called with +*args+ and
+    # the result returned.  Otherwise, the +value+ is returned as is.
+    def proc_or_value(value, *args)
+      case value
+      when Proc
+        value.call(*args)
+      else
+        value
+      end
+    end
+
+    # Overriding attribute readers to evaluate Procs
+    def service_timeout; proc_or_value(@service_timeout, @env); end
+    def wait_timeout; proc_or_value(@wait_timeout, @env); end
+    def wait_overtime; proc_or_value(@wait_overtime, @env); end
+    def service_past_wait; proc_or_value(@service_past_wait, @env); end
 
     attr_reader \
       :service_timeout,   # How long the application can take to complete handling the request once it's passed down to it.
