@@ -92,6 +92,19 @@ parameters take precedence:
 use Rack::Timeout, service_timeout: 15, wait_timeout: 30
 ```
 
+```ruby
+# config/initializers/rack_timeout.rb
+
+# pass the conditional variables as a proc object
+Rails.application.config.middleware.insert_before(
+  Rack::Runtime,
+  Rack::Timeout,
+  service_timeout: ->(ENV) {
+    ENV['DEV'] || ENV['ADMIN']] || ENV.fetch('DEV_TIMEOUT', 15).to_i
+  }
+)
+```
+
 For more on these settings, please see [doc/settings](doc/settings.md).
 
 Further Documentation

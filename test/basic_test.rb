@@ -14,6 +14,13 @@ class BasicTest < RackTimeoutTest
     end
   end
 
+  def test_timeout_with_proc
+    self.settings = { service_timeout: proc { 5 } }
+    assert_raises(Rack::Timeout::RequestTimeoutError) do
+      get "/sleep"
+    end
+  end
+
   def test_wait_timeout
     self.settings = { service_timeout: 1, wait_timeout: 15 }
     assert_raises(Rack::Timeout::RequestExpiryError) do
