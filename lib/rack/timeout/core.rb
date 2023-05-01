@@ -63,17 +63,6 @@ module Rack
       end
     end
 
-    # New helper: if +value+ is a Proc, then it will be called with +*args+ and
-    # the result returned.  Otherwise, the +value+ is returned as is.
-    def proc_or_value(value, *args)
-      case value
-      when Proc
-        value.call(*args)
-      else
-        value
-      end
-    end
-
     attr_reader \
       :service_timeout,   # How long the application can take to complete handling the request once it's passed down to it.
       :wait_timeout,      # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
@@ -102,13 +91,15 @@ MSG
     end
 
     # Overriding attribute readers to evaluate Procs
-    def service_timeout; proc_or_value(@service_timeout, @env); end
-    def wait_timeout; proc_or_value(@wait_timeout, @env); end
-    def wait_overtime; proc_or_value(@wait_overtime, @env); end
-    def service_past_wait; proc_or_value(@service_past_wait, @env); end
+    def service_timeout; value_or_proc_with_env(@service_timeout); end
+    def wait_timeout; value_or_proc_with_env(@wait_timeout); end
+    def wait_overtime; value_or_proc_with_env(@wait_overtime); end
+    def service_past_wait; value_or_proc_with_env(@service_past_wait); end
 
     RT = self # shorthand reference
     def call(env)
+      self.thread_local_env = env
+
       info      = (env[ENV_INFO_KEY] ||= RequestDetails.new)
       info.id ||= env[HTTP_X_REQUEST_ID] || env[ACTION_DISPATCH_REQUEST_ID] || SecureRandom.uuid
 
@@ -180,6 +171,9 @@ MSG
       end
 
       response
+
+    ensure
+      thread_local_env = nil
     end
 
     ### following methods are used internally (called by instances, so can't be private. _ marker should discourage people from calling them)
@@ -241,6 +235,35 @@ MSG
     # Sends out the notifications. Called internally at the end of `_set_state!`
     def self.notify_state_change_observers(env)
       @state_change_observers.values.each { |observer| observer.call(env) }
+    end
+
+    # Generates a key to use for thread-local environment storage based on object ID.
+    def thread_local_env_key
+      @tl_env_key ||= "rack_timeout_env_#{__id__}"
+    end
+
+    # Returns the thread-local environment saved by #call if a request is in
+    # progress, or nil if no request is in progress.  See
+    # #value_or_proc_with_env.
+    def thread_local_env
+      Thread.current[thread_local_env_key]
+    end
+
+    # Sets the thread-local environment.  For use by #call.
+    def thread_local_env=(env)
+      Thread.current[thread_local_env_key] = env
+    end
+
+    # If +value+ is a Proc, calls it with the thread-local environment saved in #call.
+    # Otherwise, returns +value+.
+    def value_or_proc_with_env(value)
+      case value
+      when Proc
+        value.call(thread_local_env)
+
+      else
+        value
+      end
     end
   end
 end
