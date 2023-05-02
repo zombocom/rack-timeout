@@ -63,13 +63,6 @@ module Rack
       end
     end
 
-    attr_reader \
-      :service_timeout,   # How long the application can take to complete handling the request once it's passed down to it.
-      :wait_timeout,      # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
-      :wait_overtime,     # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
-      :service_past_wait, # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
-      :term_on_timeout
-
     def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:"not_specified", term_on_timeout: nil)
       @term_on_timeout   = read_timeout_property term_on_timeout, ENV.fetch("RACK_TIMEOUT_TERM_ON_TIMEOUT", 0).to_i
       @service_timeout   = read_timeout_property service_timeout, ENV.fetch("RACK_TIMEOUT_SERVICE_TIMEOUT", 15).to_i
@@ -90,11 +83,17 @@ MSG
       @app = app
     end
 
-    # Overriding attribute readers to evaluate Procs
+    #   :service_timeout,   # How long the application can take to complete handling the request once it's passed down to it.
+    #   :wait_timeout,      # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
+    #   :wait_overtime,     # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
+    #   :service_past_wait, # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
+    #   :term_on_timeout
+
     def service_timeout; value_or_proc_with_env(@service_timeout); end
     def wait_timeout; value_or_proc_with_env(@wait_timeout); end
     def wait_overtime; value_or_proc_with_env(@wait_overtime); end
     def service_past_wait; value_or_proc_with_env(@service_past_wait); end
+    def term_on_timeout; value_or_proc_with_env(@term_on_timeout); end
 
     RT = self # shorthand reference
     def call(env)
@@ -173,7 +172,7 @@ MSG
       response
 
     ensure
-      thread_local_env = nil
+      self.thread_local_env = nil
     end
 
     ### following methods are used internally (called by instances, so can't be private. _ marker should discourage people from calling them)
@@ -260,7 +259,6 @@ MSG
       case value
       when Proc
         value.call(thread_local_env)
-
       else
         value
       end
