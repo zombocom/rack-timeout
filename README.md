@@ -1,5 +1,4 @@
-Rack::Timeout
-=============
+# Rack::Timeout
 
 Abort requests that are taking too long; an exception is raised.
 
@@ -15,13 +14,11 @@ rack-timeout's data and address recurring instances of particular
 timeouts, for example by refactoring code so it runs faster or
 offsetting lengthy work to happen asynchronously.
 
-Upgrading
----------
+## Upgrading
 
 For fixing issues when upgrading, please see [UPGRADING](UPGRADING.md).
 
-Basic Usage
------------
+## Basic Usage
 
 The following covers currently supported versions of Rails, Rack, Ruby,
 and Bundler. See the Compatibility section at the end for legacy
@@ -70,8 +67,7 @@ require "rack-timeout"
 use Rack::Timeout, service_timeout: 15
 ```
 
-Configuring
------------
+## Configuring
 
 Rack::Timeout takes the following settings, shown here with their
 default values and associated environment variables.
@@ -94,8 +90,7 @@ use Rack::Timeout, service_timeout: 15, wait_timeout: 30
 
 For more on these settings, please see [doc/settings](doc/settings.md).
 
-Further Documentation
----------------------
+## Further Documentation
 
 Please see the [doc](doc) folder for further documentation on:
 
