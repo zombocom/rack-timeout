@@ -104,12 +104,20 @@ Please see the [doc](doc) folder for further documentation on:
 
 Additionally there is a [demo app](https://github.com/zombocom/rack_timeout_demos) that shows the impact of changing settings and how the library behaves when a timeout is hit.
 
-Compatibility
--------------
+## Compatibility
 
 This version of Rack::Timeout is compatible with Ruby 2.1 and up, and,
 for Rails apps, Rails 3.x and up.
 
+
+## Contributing
+
+### running tests
+
+```
+bundle
+bundle exec rake test
+```
 
 ---
 Copyright © 2010-2020 Caio Chassot, released under the MIT license

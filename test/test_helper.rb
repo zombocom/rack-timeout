@@ -1,5 +1,7 @@
 require "test/unit"
 require "rack/test"
+require "rack/builder"
+require "rack/null_logger"
 require "rack-timeout"
 
 class RackTimeoutTest < Test::Unit::TestCase
