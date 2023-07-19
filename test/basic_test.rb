@@ -9,9 +9,10 @@ class BasicTest < RackTimeoutTest
 
   def test_timeout
     self.settings = { service_timeout: 1 }
-    assert_raises(Rack::Timeout::RequestTimeoutError) do
+    e = assert_raises(Rack::Timeout::RequestTimeoutError) do
       get "/sleep"
     end
+    assert_equal 'Request ran for longer than 1000ms ', e.message
   end
 
   def test_wait_timeout

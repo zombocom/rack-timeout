@@ -102,3 +102,16 @@ Request ran for longer than 1000ms, sending SIGTERM to process 3925
 ```
 
 > Note: Since the worker waits for all in-flight requests to finish (with puma) you may see multiple SIGTERMs to the same PID before it exits, this means that multiple requests timed out.
+
+### Generic Message
+
+When timing out, Rack Timeout will usually give a helpful error message with information about what happened, e.g.:
+
+> Request waited 2ms, then ran for longer than 59000ms , sending SIGTERM to process 10224
+
+Some error tracker systems will use the message to group errors together, resulting in an artifically high number of
+new "error groups" being created, which can become noisy in the error tracking system, even in apps with fairly infrequent timouts.
+To improve the error grouping, at the cost of decreased information, you can set `RACK_TIMEOUT_GENERIC_MESSAGE` or `generic_message`
+to `1`. This will make all messages the same:
+
+> Request timed out

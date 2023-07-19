@@ -1,5 +1,7 @@
 ## HEAD (unreleased)
  - Improve message when Terminate on Timeout is used on a platform that does not support it (eg. Windows or JVM)
+ - RACK_TIMEOUT_GENERIC_MESSAGE can be set so that error messages are always the same, to aid in grouping in
+   error trackers
 
 ## 0.6.3
 
