@@ -116,6 +116,16 @@ This version of Rack::Timeout is compatible with Ruby 2.1 and up, and,
 for Rails apps, Rails 3.x and up.
 
 
+Contributing
+------------
+
+Run the test suite:
+
+```console
+bundle
+bundle exec rake test
+```
+
 ---
 Copyright © 2010-2020 Caio Chassot, released under the MIT license
 <http://github.com/sharpstone/rack-timeout>
