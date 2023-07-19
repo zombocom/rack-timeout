@@ -10,6 +10,15 @@ class EnvSettingsTest < RackTimeoutTest
     end
   end
 
+  def test_generic_message
+    with_env(RACK_TIMEOUT_GENERIC_MESSAGE: 1) do
+      self.settings = { service_timeout: 1 }
+      e = assert_raises(Rack::Timeout::RequestTimeoutError) do
+        get "/sleep"
+      end
+      assert_equal 'Request timed out', e.message
+    end
+  end
   
   if Process.respond_to?(:fork) # This functionality does not work on windows, so we cannot test it there.
     def test_service_timeout

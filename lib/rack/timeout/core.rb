@@ -64,14 +64,16 @@ module Rack
       :wait_timeout,      # How long the request is allowed to have waited before reaching rack. If exceeded, the request is 'expired', i.e. dropped entirely without being passed down to the application.
       :wait_overtime,     # Additional time over @wait_timeout for requests with a body, like POST requests. These may take longer to be received by the server before being passed down to the application, but should not be expired.
       :service_past_wait, # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value. we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
-      :term_on_timeout
+      :term_on_timeout,
+      :generic_message
 
-    def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:"not_specified", term_on_timeout: nil)
+    def initialize(app, service_timeout:nil, wait_timeout:nil, wait_overtime:nil, service_past_wait:"not_specified", term_on_timeout: nil, generic_message: nil)
       @term_on_timeout   = read_timeout_property term_on_timeout, ENV.fetch("RACK_TIMEOUT_TERM_ON_TIMEOUT", 0).to_i
       @service_timeout   = read_timeout_property service_timeout, ENV.fetch("RACK_TIMEOUT_SERVICE_TIMEOUT", 15).to_i
       @wait_timeout      = read_timeout_property wait_timeout,    ENV.fetch("RACK_TIMEOUT_WAIT_TIMEOUT", 30).to_i
       @wait_overtime     = read_timeout_property wait_overtime,   ENV.fetch("RACK_TIMEOUT_WAIT_OVERTIME", 60).to_i
       @service_past_wait = service_past_wait == "not_specified" ? ENV.fetch("RACK_TIMEOUT_SERVICE_PAST_WAIT", false).to_s != "false" : service_past_wait
+      @generic_message   = read_timeout_property generic_message, ENV.fetch("RACK_TIMEOUT_GENERIC_MESSAGE", 0).to_i
 
       Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
       if @term_on_timeout && !::Process.respond_to?(:fork)
@@ -133,17 +135,22 @@ MSG
       timeout = RT::Scheduler::Timeout.new do |app_thread|  # creates a timeout instance responsible for timing out the request. the given block runs if timed out
         register_state_change.call :timed_out
 
-        message = "Request "
-        message << "waited #{info.ms(:wait)}, then " if info.wait
-        message << "ran for longer than #{info.ms(:timeout)} "
+        if generic_message
+          message = 'Request timed out'
+        else
+          message = "Request "
+          message << "waited #{info.ms(:wait)}, then " if info.wait
+          message << "ran for longer than #{info.ms(:timeout)} "
+        end
+
         if term_on_timeout
           Thread.main['RACK_TIMEOUT_COUNT'] += 1
 
           if Thread.main['RACK_TIMEOUT_COUNT'] >= @term_on_timeout
-            message << ", sending SIGTERM to process #{Process.pid}"
+            message << ", sending SIGTERM to process #{Process.pid}" unless generic_message
             Process.kill("SIGTERM", Process.pid)
           else
-            message << ", #{Thread.main['RACK_TIMEOUT_COUNT']}/#{term_on_timeout} timeouts allowed before SIGTERM for process #{Process.pid}"
+            message << ", #{Thread.main['RACK_TIMEOUT_COUNT']}/#{term_on_timeout} timeouts allowed before SIGTERM for process #{Process.pid}" unless generic_message
           end
         end
 

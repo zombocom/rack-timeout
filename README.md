@@ -82,6 +82,7 @@ wait_timeout:      30     # RACK_TIMEOUT_WAIT_TIMEOUT
 wait_overtime:     60     # RACK_TIMEOUT_WAIT_OVERTIME
 service_past_wait: false  # RACK_TIMEOUT_SERVICE_PAST_WAIT
 term_on_timeout:   false  # RACK_TIMEOUT_TERM_ON_TIMEOUT
+generic_message:   false  # RACK_TIMEOUT_GENERIC_MESSAGE
 ```
 
 These settings can be overriden during middleware initialization or
@@ -115,6 +116,16 @@ Compatibility
 This version of Rack::Timeout is compatible with Ruby 2.1 and up, and,
 for Rails apps, Rails 3.x and up.
 
+
+Contributing
+------------
+
+Run the test suite:
+
+```console
+bundle
+bundle exec rake test
+```
 
 ---
 Copyright © 2010-2020 Caio Chassot, released under the MIT license
