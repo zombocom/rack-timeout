@@ -20,4 +20,11 @@ class BasicTest < RackTimeoutTest
       get "/", "", 'HTTP_X_REQUEST_START' => time_in_msec(Time.now - 100)
     end
   end
+
+  def test_apache_formatted_header_wait_timeout
+    self.settings = { service_timeout: 1, wait_timeout: 15 }
+    assert_raises(Rack::Timeout::RequestExpiryError) do
+      get "/", "", 'HTTP_X_REQUEST_START' => "t=#{time_in_usec(Time.now - 100)}"
+    end
+  end
 end

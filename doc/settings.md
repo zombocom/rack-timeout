@@ -29,9 +29,18 @@ Wait timeout can be disabled entirely by setting the property to `0` or `false`.
 
 A request's computed wait time may affect the service timeout used for it. Basically, a request's wait time plus service time may not exceed the wait timeout. The reasoning for that is based on Heroku router's behavior, that the request would be dropped anyway after the wait timeout. So, for example, with the default settings of `service_timeout=15`, `wait_timeout=30`, a request that had 20 seconds of wait time will not have a service timeout of 15, but instead of 10, as there are only 10 seconds left before `wait_timeout` is reached. This behavior can be disabled by setting `service_past_wait` to `true`. When set, the `service_timeout` setting will always be honored. Please note that if you're using the `RACK_TIMEOUT_SERVICE_PAST_WAIT` environment variable, any value different than `"false"` will be considered `true`.
 
-The way we're able to infer a request's start time, and from that its wait time, is through the availability of the `X-Request-Start` HTTP header, which is expected to contain the time since epoch in milliseconds. (A concession is made for nginx's sec.msec notation.)
+The way we're able to infer a request's start time, and from that its wait time, is through the availability of the `X-Request-Start` HTTP header, which is expected to contain the time since UNIX epoch in milliseconds or microseconds.
 
-If the `X-Request-Start` header is not present `wait_timeout` handling is skipped entirely.
+Compatible header string formats are:
+
+- `seconds.milliseconds`, e.g. `1700173924.763` - 10.3 digits, nginx standard format
+- `t=seconds.milliseconds`, e.g. `t=1700173924.763` - 10.3 digits, nginx standard format with [New Relic recommended][new-relic-recommended-format] `t=` prefix
+- `milliseconds`, e.g. `1700173924763` - 13 digits, Heroku standard format
+- `t=microseconds`, e.g. `t=1700173924763384` - 16 digits with `t=` prefix, Apache standard format
+
+[new-relic-recommended-format]: https://docs.newrelic.com/docs/apm/applications-menu/features/request-queue-server-configuration-examples/
+
+If the `X-Request-Start` header is not present, or does not match one of these formats, `wait_timeout` handling is skipped entirely.
 
 ### Wait Overtime
 

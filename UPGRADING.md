@@ -1,6 +1,19 @@
 Upgrading
 =========
 
+From 0.6.3 or older
+-----------------
+
+- Apache's `X-Request-Start` header is now recognized, which if present
+  will trigger the default `wait_timeout` behavior (unless you have changed
+  those settings or disabled it).
+
+  Please review `wait_timeout` behavior in [doc/settings.md](doc/settings.md#wait-timeout).
+
+  TL;DR -> set `wait_timeout` to `0` or `'false'` to disable it and maintain
+  your Apache setup's current behavior.
+
+
 From 0.4 or older
 -----------------
 
