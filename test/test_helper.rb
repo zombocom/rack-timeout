@@ -1,5 +1,7 @@
 require "test/unit"
 require "rack/test"
+require "rack/builder"
+require "rack/null_logger"
 require "rack-timeout"
 
 class RackTimeoutTest < Test::Unit::TestCase
@@ -41,5 +43,10 @@ class RackTimeoutTest < Test::Unit::TestCase
 
   def time_in_msec(t = Time.now)
     "#{t.tv_sec}#{t.tv_usec/1000}"
+  end
+
+  def time_in_usec(t = Time.now)
+    # time in microseconds, currently 16 digits
+    "#{t.tv_sec}#{t.tv_usec}"
   end
 end
