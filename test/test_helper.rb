@@ -1,4 +1,5 @@
 require "test/unit"
+require "rack"
 require "rack/test"
 require "rack-timeout"
 
