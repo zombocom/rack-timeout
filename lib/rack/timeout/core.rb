@@ -73,7 +73,6 @@ module Rack
       @wait_overtime     = read_timeout_property wait_overtime,   ENV.fetch("RACK_TIMEOUT_WAIT_OVERTIME", 60).to_i
       @service_past_wait = service_past_wait == "not_specified" ? ENV.fetch("RACK_TIMEOUT_SERVICE_PAST_WAIT", false).to_s != "false" : service_past_wait
 
-      Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
       if @term_on_timeout && !::Process.respond_to?(:fork)
         raise(NotImplementedError, <<-MSG)
 The platform running your application does not support forking (i.e. Windows, JVM, etc).
@@ -137,6 +136,7 @@ MSG
         message << "waited #{info.ms(:wait)}, then " if info.wait
         message << "ran for longer than #{info.ms(:timeout)} "
         if term_on_timeout
+          Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
           Thread.main['RACK_TIMEOUT_COUNT'] += 1
 
           if Thread.main['RACK_TIMEOUT_COUNT'] >= @term_on_timeout
