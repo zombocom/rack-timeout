@@ -139,7 +139,7 @@ MSG
           Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
           Thread.main['RACK_TIMEOUT_COUNT'] += 1
 
-          if Thread.main['RACK_TIMEOUT_COUNT'] >= @term_on_timeout
+          if Thread.main['RACK_TIMEOUT_COUNT'] >= term_on_timeout
             message << ", sending SIGTERM to process #{Process.pid}"
             Process.kill("SIGTERM", Process.pid)
           else
