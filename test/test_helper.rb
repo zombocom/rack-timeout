@@ -28,7 +28,7 @@ class RackTimeoutTest < Test::Unit::TestCase
     end
   end
 
-  # runs the test with the given environment, but doesnt restore the original
+  # runs the test with the given environment, but doesn't restore the original
   # environment afterwards. This should be sufficient for rack-timeout testing.
   def with_env(hash)
     hash.each_pair do |k, v|
