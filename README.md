@@ -107,7 +107,19 @@ Please see the [doc](doc) folder for further documentation on:
 * [Settings](doc/settings.md)
 * [Logging](doc/logging.md)
 
-Additionally there is a [demo app](https://github.com/zombocom/rack_timeout_demos) that shows the impact of changing settings and how the library behaves when a timeout is hit.
+Additionally there is a [demo app](https://github.com/zombocom/rack_timeout_demos)
+that shows the impact of changing settings and how the library behaves
+when a timeout is hit.
+
+Contributing
+------------
+
+Run the test suite:
+
+```console
+bundle
+bundle exec rake test
+```
 
 Compatibility
 -------------
@@ -118,4 +130,4 @@ for Rails apps, Rails 3.x and up.
 
 ---
 Copyright © 2010-2020 Caio Chassot, released under the MIT license
-<http://github.com/sharpstone/rack-timeout>
+<http://github.com/zombocom/rack-timeout>
