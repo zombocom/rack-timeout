@@ -1,6 +1,6 @@
 ## HEAD (unreleased)
  - Improve message when Terminate on Timeout is used on a platform that does not support it (eg. Windows or JVM)
- - Honor an `X-Request-Start` header with Apache's standard `t=<microseconds>` format, to allow using `wait_timeout` functionality
+ - Honor an `X-Request-Start` header with the `t=<microseconds>` format, to allow using `wait_timeout` functionality with Apache
 
 ## 0.6.3
 
