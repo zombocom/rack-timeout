@@ -47,6 +47,6 @@ class RackTimeoutTest < Test::Unit::TestCase
 
   def time_in_usec(t = Time.now)
     # time in microseconds, currently 16 digits
-    "#{t.tv_sec}#{t.tv_usec}"
+    "%d%06d" % [t.tv_sec, t.tv_usec]
   end
 end
