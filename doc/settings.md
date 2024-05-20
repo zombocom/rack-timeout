@@ -33,10 +33,10 @@ The way we're able to infer a request's start time, and from that its wait time,
 
 Compatible header string formats are:
 
-- `seconds.milliseconds`, e.g. `1700173924.763` - 10.3 digits, nginx standard format
-- `t=seconds.milliseconds`, e.g. `t=1700173924.763` - 10.3 digits, nginx standard format with [New Relic recommended][new-relic-recommended-format] `t=` prefix
-- `milliseconds`, e.g. `1700173924763` - 13 digits, Heroku standard format
-- `t=microseconds`, e.g. `t=1700173924763384` - 16 digits with `t=` prefix, Apache standard format
+- `seconds.milliseconds`, e.g. `1700173924.763` - 10.3 digits (nginx format)
+- `t=seconds.milliseconds`, e.g. `t=1700173924.763` - 10.3 digits, nginx format with [New Relic recommended][new-relic-recommended-format] `t=` prefix
+- `milliseconds`, e.g. `1700173924763` - 13 digits (Heroku format)
+- `t=microseconds`, e.g. `t=1700173924763384` - 16 digits with `t=` prefix (Apache format)
 
 [new-relic-recommended-format]: https://docs.newrelic.com/docs/apm/applications-menu/features/request-queue-server-configuration-examples/
 
