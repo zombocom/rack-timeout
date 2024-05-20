@@ -1,4 +1,4 @@
-RACK_TIMEOUT_VERSION = "0.6.3"
+RACK_TIMEOUT_VERSION = "0.7.0"
 
 Gem::Specification.new do |spec|
   spec.name        = "rack-timeout"
