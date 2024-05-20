@@ -1,6 +1,10 @@
-## HEAD (unreleased)
- - Improve message when Terminate on Timeout is used on a platform that does not support it (eg. Windows or JVM)
- - Honor an `X-Request-Start` header with the `t=<microseconds>` format, to allow using `wait_timeout` functionality with Apache
+## 0.7.0
+
+ - Honor an `X-Request-Start` header with the `t=<microseconds>` format, to allow using `wait_timeout` functionality with Apache (https://github.com/zombocom/rack-timeout/pull/210)
+ - Improve message when Terminate on Timeout is used on a platform that does not support it (eg. Windows or JVM) (https://github.com/zombocom/rack-timeout/pull/192)
+ - Fix a thread safety issue for forks that are not on the main thread (https://github.com/zombocom/rack-timeout/pull/212)
+ - Add compatibility with frozen_string_literal: true (https://github.com/zombocom/rack-timeout/pull/196)
+ - Fix if Rails is defined but Rails::VERSION is not defined (https://github.com/zombocom/rack-timeout/pull/191)
 
 ## 0.6.3
 
