@@ -124,7 +124,7 @@ bundle exec rake test
 Compatibility
 -------------
 
-This version of Rack::Timeout is compatible with Ruby 2.1 and up, and,
+This version of Rack::Timeout is compatible with Ruby 2.3 and up, and,
 for Rails apps, Rails 3.x and up.
 
 
