@@ -22,8 +22,6 @@ jobs:
           - '3.2'
           - 'head'
         exclude:
-          - ruby: '2.2'
-            rack-version: '~> 3.0'
           - ruby: '2.3'
             rack-version: '~> 3.0'
     runs-on: ${{ matrix.os }}
