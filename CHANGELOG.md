@@ -1,3 +1,7 @@
+## Unreleased
+
+ - CI: Add Ruby 3.3 to build matrix. (https://github.com/zombocom/rack-timeout/pull/217)
+
 ## 0.7.0
 
  - Honor an `X-Request-Start` header with the `t=<microseconds>` format, to allow using `wait_timeout` functionality with Apache (https://github.com/zombocom/rack-timeout/pull/210)
