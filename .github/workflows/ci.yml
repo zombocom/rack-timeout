@@ -6,6 +6,7 @@ on:
 
 jobs:
   test:
+    name: "Ruby ${{ matrix.ruby }}, Rack ${{ matrix.rack-version }}, ${{ matrix.os }}"
     strategy:
       fail-fast: false
       matrix:
