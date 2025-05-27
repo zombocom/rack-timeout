@@ -22,7 +22,6 @@ jobs:
           - '3.2'
           - '3.3'
           - '3.4'
-          - 'head'
         exclude:
           - ruby: '2.3'
             rack-version: '~> 3.0'
