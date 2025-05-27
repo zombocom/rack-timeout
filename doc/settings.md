@@ -69,7 +69,7 @@ If your application timeouts fire frequently then [they can cause your applicati
 
 **Puma SIGTERM behavior** When a Puma worker receives a `SIGTERM` it will begin to shut down, but not exit right away. It stops accepting new requests and waits for any existing requests to finish before fully shutting down. This means that only the request that experiences a timeout will be interrupted, all other in-flight requests will be allowed to run until they return or also are timed out.
 
-After the worker process exits will Puma's parent process know to boot a replacement worker. While one process is restarting, another can still serve requests (if you have more than 1 worker process per server/dyno). Between when a process exits and when a new process boots, there will be a reduction in throughput. If all processes are restarting, then incoming requests will be blocked while new processes boot.
+After the worker process exits, Puma's parent process will boot a replacement worker. While one process is restarting, another can still serve requests (if you have more than 1 worker process per server/dyno). Between when a process exits and when a new process boots, there will be a reduction in throughput. If all processes are restarting, then incoming requests will be blocked while new processes boot.
 
 **How to enable** To enable this behavior you can set `term_on_timeout: 1` to an integer value. If you set it to one, then the first time the process encounters a timeout, it will receive a SIGTERM.
 
