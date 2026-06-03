@@ -103,6 +103,7 @@ Please see the [doc](doc) folder for further documentation on:
 * [Understanding the request lifecycle](doc/request-lifecycle.md)
 * [Exceptions raised by Rack::Timeout](doc/exceptions.md)
 * [Rollbar fingerprinting](doc/rollbar.md)
+* [Sentry fingerprinting](doc/sentry.md)
 * [Observers](doc/observers.md)
 * [Settings](doc/settings.md)
 * [Logging](doc/logging.md)
