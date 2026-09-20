@@ -200,7 +200,9 @@ MSG
 
     def self._set_state!(env, state)
       raise "Invalid state: #{state.inspect}" unless VALID_STATES.include? state
-      env[ENV_INFO_KEY].state = state
+      info = env[ENV_INFO_KEY]
+      return unless info # the request's info may already be gone by the time an async heartbeat/timeout callback runs
+      info.state = state
       notify_state_change_observers(env)
     end
 
