@@ -134,7 +134,7 @@ MSG
 
         message = +"Request "
         message << "waited #{info.ms(:wait)}, then " if info.wait
-        message << "ran for longer than #{info.ms(:timeout)} "
+        message << "ran for longer than #{info.ms(:timeout)}"
         if term_on_timeout
           Thread.main['RACK_TIMEOUT_COUNT'] ||= 0
           Thread.main['RACK_TIMEOUT_COUNT'] += 1
